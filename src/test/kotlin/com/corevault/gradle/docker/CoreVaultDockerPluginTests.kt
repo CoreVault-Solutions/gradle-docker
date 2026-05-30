@@ -327,7 +327,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
     @Test
     fun `applies all configured tags`() {
         assumeDockerAvailable()
-        val id = "id6"
+        val id = "id13"
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFile.writeText(
             """
@@ -525,7 +525,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             """
             plugins { id 'com.corevault.docker' }
             task myTgz(type: Tar) {
-                destinationDirectory = project.buildDir
+                destinationDirectory = layout.buildDirectory
                 archiveBaseName = 'foo'
                 archiveExtension = 'tgz'
                 compression = Compression.GZIP
@@ -570,7 +570,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
     @Test
     fun `can add entire directories via copyspec`() {
         assumeDockerAvailable()
-        val id = "id1"
+        val id = "id14"
         createFile("myDir/bar")
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\nADD myDir /myDir/\n")
         buildFile.writeText(
