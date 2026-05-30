@@ -107,14 +107,14 @@ class CoreVaultDockerPlugin @Inject constructor(
             ext.namedTags.forEach { (taskName, tagName) ->
                 val normalizedTaskName = generateTagTaskName(taskName)
                 require(!tags.containsKey(normalizedTaskName)) {
-                    "Task name '$normalizedTaskName' (from named tag '$taskName') is existed."
+                    "Task name '$normalizedTaskName' (from named tag '$taskName') already exists."
                 }
                 tags[normalizedTaskName] = Pair(tagName) { _ -> tagName }
             }
             if (ext.getTags().isNotEmpty()) {
                 ext.getTags().forEach { unresolvedTagName ->
                     val taskName = generateTagTaskName(unresolvedTagName)
-                    require(!tags.containsKey(taskName)) { "Task name '$taskName' is existed." }
+                    require(!tags.containsKey(taskName)) { "Task name '$taskName' already exists." }
                     tags[taskName] = Pair(unresolvedTagName) { imgName -> computeName(imgName, unresolvedTagName) }
                 }
             }

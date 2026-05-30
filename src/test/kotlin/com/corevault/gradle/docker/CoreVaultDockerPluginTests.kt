@@ -190,7 +190,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             """.trimIndent(),
         )
         val result = gradleRunner("tasks").buildAndFail()
-        assertTrue(result.output.contains("is existed."))
+        assertTrue(result.output.contains("already exists."))
     }
 
     @Test
