@@ -549,7 +549,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
     @Test
     fun `check labels are correctly applied to image`() {
         assumeDockerAvailable()
-        val id = "id10"
+        val id = "id12"
         file("Dockerfile").writeText("FROM alpine:3.2\n")
         buildFile.writeText(
             """

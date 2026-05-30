@@ -53,7 +53,9 @@ apply plugin: 'com.palantir.baseline-java-versions'
 apply plugin: 'com.palantir.jdks.latest'
 
 group = 'com.corevault.gradle.docker'
-version = System.env.CIRCLE_TAG ?: gitVersion()
+// gitVersion() derives the version from git tags, so it works on any CI (and locally)
+// without a CI-specific tag environment variable.
+version = gitVersion()
 
 kotlin {
     compilerOptions {

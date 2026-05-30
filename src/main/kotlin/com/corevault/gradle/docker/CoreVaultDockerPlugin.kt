@@ -21,9 +21,7 @@ class CoreVaultDockerPlugin @Inject constructor(
 ) : Plugin<Project> {
     override fun apply(project: Project) {
         val ext = project.extensions.create("docker", DockerExtension::class.java, project)
-        try {
-            project.configurations.named("docker")
-        } catch (_: Exception) {
+        if (project.configurations.findByName("docker") == null) {
             project.configurations.create("docker")
         }
 
@@ -183,7 +181,7 @@ class CoreVaultDockerPlugin @Inject constructor(
             if (ext.load) cmdList.add("--load")
             if (ext.push) {
                 cmdList.add("--push")
-                if (ext.load) throw RuntimeException("cannot combine 'push' and 'load' options")
+                if (ext.load) throw GradleException("Cannot combine 'push' and 'load' options.")
             }
             if (ext.builder != null) {
                 cmdList.addAll(listOf("--builder", ext.builder!!))
