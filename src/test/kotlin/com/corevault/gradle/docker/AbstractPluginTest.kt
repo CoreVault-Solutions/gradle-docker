@@ -1,6 +1,7 @@
 package com.corevault.gradle.docker
 
 import org.gradle.testkit.runner.GradleRunner
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -16,6 +17,18 @@ abstract class AbstractPluginTest {
     fun setup() {
         buildFile = file("build.gradle")
         println("Build directory:\n${projectDir.absolutePath}")
+    }
+
+    /** True when running in a CI environment (GitHub Actions, CircleCI, ... all set CI=true). */
+    fun isCi(): Boolean = System.getenv("CI") == "true"
+
+    /**
+     * Skips (does not fail) the calling test when a usable Docker toolchain isn't expected — i.e. in
+     * CI, where runners don't provide buildx/qemu/docker-compose-v1. These integration tests still
+     * run locally where Docker is available. Call as the first line of any Docker-dependent test.
+     */
+    fun assumeDockerAvailable() {
+        Assumptions.assumeFalse(isCi(), "Docker-dependent integration test skipped in CI environment")
     }
 
     fun gradleRunner(vararg tasks: String): GradleRunner =

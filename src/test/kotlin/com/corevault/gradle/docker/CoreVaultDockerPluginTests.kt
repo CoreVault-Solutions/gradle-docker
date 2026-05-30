@@ -217,6 +217,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `check plugin creates a docker container with default configuration`() {
+        assumeDockerAvailable()
         val id = "id1"
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFile.writeText(
@@ -234,6 +235,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `check plugin creates a docker container with non-standard Dockerfile name`() {
+        assumeDockerAvailable()
         val id = "id2"
         file("foo").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFile.writeText(
@@ -254,6 +256,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `check files are correctly added to docker context`() {
+        assumeDockerAvailable()
         val id = "id3"
         val filename = "foo.txt"
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\nADD $filename /tmp/\n")
@@ -275,6 +278,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `check multiarch`() {
+        assumeDockerAvailable()
         val id = "id4"
         val filename = "foo.txt"
         file("Dockerfile").writeText("FROM alpine\nMAINTAINER $id\nADD $filename /tmp/\n")
@@ -299,6 +303,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `does not throw if name is configured after evaluation phase`() {
+        assumeDockerAvailable()
         val id = "id6"
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFile.writeText(
@@ -327,6 +332,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `running tag task creates images with specified tags`() {
+        assumeDockerAvailable()
         val id = "id6"
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFile.writeText(
@@ -363,6 +369,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `build args are correctly processed`() {
+        assumeDockerAvailable()
         val id = "id7"
         file("Dockerfile").writeText(
             """
@@ -391,6 +398,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `rebuilding an image does it from scratch when noCache parameter is set`() {
+        assumeDockerAvailable()
         val id = "id66"
         val filename = "bar.txt"
         file("Dockerfile").writeText("FROM alpine:3.2\nADD $filename /tmp/\n")
@@ -417,6 +425,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `base image is pulled when pull parameter is set`() {
+        assumeDockerAvailable()
         val id = "id8"
         file("Dockerfile").writeText("FROM alpine:3.2\n")
         buildFile.writeText(
@@ -437,6 +446,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `can build docker with network mode configured`() {
+        assumeDockerAvailable()
         val id = "id11"
         file("Dockerfile").writeText("FROM alpine:3.2\nRUN curl localhost:404\n")
         buildFile.writeText(
@@ -460,6 +470,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `can add files from project directory to build context`() {
+        assumeDockerAvailable()
         val id = "id9"
         val filename = "bar.txt"
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\nADD $filename /tmp/\n")
@@ -481,6 +492,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `when adding a project-dir file and a Tar file they both end up unzipped in docker image`() {
+        assumeDockerAvailable()
         val id = "id10"
         createFile("from_project")
         createFile("from_tgz")
@@ -512,6 +524,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `check labels are correctly applied to image`() {
+        assumeDockerAvailable()
         val id = "id10"
         file("Dockerfile").writeText("FROM alpine:3.2\n")
         buildFile.writeText(
@@ -532,6 +545,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
 
     @Test
     fun `can add entire directories via copyspec`() {
+        assumeDockerAvailable()
         val id = "id1"
         createFile("myDir/bar")
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\nADD myDir /myDir/\n")

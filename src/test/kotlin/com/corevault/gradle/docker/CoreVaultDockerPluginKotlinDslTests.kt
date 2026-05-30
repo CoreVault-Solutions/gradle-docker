@@ -65,6 +65,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
 
     @Test
     fun `creates a docker container with default configuration (kotlin dsl)`() {
+        assumeDockerAvailable()
         val id = "kts1"
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFileKts.writeText(
@@ -86,6 +87,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
 
     @Test
     fun `labels and build args applied via kotlin dsl`() {
+        assumeDockerAvailable()
         val id = "kts7"
         file("Dockerfile").writeText(
             """
@@ -156,6 +158,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
 
     @Test
     fun `can run, status, and stop a container (kotlin dsl)`() {
+        assumeDockerAvailable()
         buildFileKts.writeText(
             """
             plugins {

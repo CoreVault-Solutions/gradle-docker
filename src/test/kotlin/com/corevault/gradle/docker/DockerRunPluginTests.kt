@@ -3,12 +3,17 @@ package com.corevault.gradle.docker
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 
 class DockerRunPluginTests : AbstractPluginTest() {
 
     private val sep = System.lineSeparator()
+
+    // Every test in this class shells out to Docker, so skip them all in CI.
+    @BeforeEach
+    fun requireDocker() = assumeDockerAvailable()
 
     @Test
     fun `can run, status, and stop a container made by the docker plugin`() {
@@ -284,5 +289,4 @@ class DockerRunPluginTests : AbstractPluginTest() {
         assertTrue(result.output.contains("Docker container 'foo-envvars' is STOPPED."))
     }
 
-    private fun isCi(): Boolean = System.getenv("CI") == "true"
 }

@@ -114,6 +114,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
 
     @Test
     fun `docker-compose is executed and fails on invalid file`() {
+        assumeDockerAvailable()
         file("docker-compose.yml").writeText("FOO")
         buildFile.writeText(
             """
@@ -134,6 +135,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
 
     @Test
     fun `docker-compose successfully creates docker container`() {
+        assumeDockerAvailable()
         file("docker-compose.yml").writeText(
             """
             version: "2"
@@ -161,6 +163,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
 
     @Test
     fun `docker-compose successfully creates docker container from custom file`() {
+        assumeDockerAvailable()
         file("test-file.yml").writeText(
             """
             version: "2"
@@ -191,6 +194,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
 
     @Test
     fun `docker-compose stop successfully stops docker container`() {
+        assumeDockerAvailable()
         file("docker-compose.yml").writeText(
             """
             version: "2"
