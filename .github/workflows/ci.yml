@@ -39,8 +39,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Keep in sync with gradleTestUtils.gradleVersions in build.gradle.
-        gradle: ['8.14.5', '9.0.0', '9.5.1']
+        # Gradle versions this plugin can be *compiled* under. 9.5.1 is intentionally omitted:
+        # the Kotlin Gradle plugin (2.1.0) can't resolve its compiler-plugin classpath under
+        # Gradle 9.5's variant model ("Value for variants of root project : has not been
+        # calculated yet"). Runtime compatibility with 9.5.1 is still covered by the TestKit
+        # matrix (gradleTestUtils.gradleVersions) exercised in the `build` job above.
+        gradle: ['8.14.5', '9.0.0', '9.1.0']
     steps:
       - uses: actions/checkout@v4
         with:
