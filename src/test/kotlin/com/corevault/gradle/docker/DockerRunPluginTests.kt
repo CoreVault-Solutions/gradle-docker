@@ -39,7 +39,7 @@ class DockerRunPluginTests : AbstractPluginTest() {
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerStop")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, offline.task(":dockerRunStatus")?.outcome)
         assertTrue(offline.output.contains("Docker container 'foo' is STOPPED."))
-        execCond("docker rmi -f foo-image")
+        execCond("docker", "rmi", "-f", "foo-image")
     }
 
     @Test

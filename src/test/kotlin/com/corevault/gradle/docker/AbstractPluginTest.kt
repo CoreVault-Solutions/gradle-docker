@@ -25,15 +25,16 @@ abstract class AbstractPluginTest {
             .withPluginClasspath()
             .withDebug(true)
 
-    fun exec(command: String): String {
-        val proc = Runtime.getRuntime().exec(command.split(" ").toTypedArray())
+    fun exec(vararg command: String): String {
+        val proc = ProcessBuilder(*command).start()
         val output = proc.inputStream.bufferedReader().readText()
+        proc.errorStream.bufferedReader().readText()
         proc.waitFor()
         return output
     }
 
-    fun execCond(command: String): Boolean {
-        val proc = Runtime.getRuntime().exec(command.split(" ").toTypedArray())
+    fun execCond(vararg command: String): Boolean {
+        val proc = ProcessBuilder(*command).start()
         proc.inputStream.bufferedReader().readText()
         proc.errorStream.bufferedReader().readText()
         proc.waitFor()

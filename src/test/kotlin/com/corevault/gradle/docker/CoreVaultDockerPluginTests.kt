@@ -190,8 +190,8 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         val result = gradleRunner("docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerPrepare")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
-        assertTrue(exec("docker inspect --format '{{.Author}}' $id").trim() == "'$id'")
-        execCond("docker rmi -f $id")
+        assertTrue(exec("docker", "inspect", "--format", "{{.Author}}", id).trim() == id)
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -210,8 +210,8 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         val result = gradleRunner("docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerPrepare")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
-        assertTrue(exec("docker inspect --format '{{.Author}}' $id").trim() == "'$id'")
-        execCond("docker rmi -f $id")
+        assertTrue(exec("docker", "inspect", "--format", "{{.Author}}", id).trim() == id)
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -232,7 +232,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         val result = gradleRunner("docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerPrepare")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
-        execCond("docker rmi -f $id")
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -256,7 +256,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         val result = gradleRunner("docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerPrepare")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
-        execCond("docker rmi -f $id")
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -279,12 +279,12 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerPrepare")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerTag")?.outcome)
-        execCond("docker rmi -f $id")
-        execCond("docker rmi -f $id:another")
-        execCond("docker rmi -f $id:latest")
-        execCond("docker rmi -f $id:2.0")
-        execCond("docker rmi -f $id-new:latest")
-        execCond("docker rmi -f $id:new-latest")
+        execCond("docker", "rmi", "-f", id)
+        execCond("docker", "rmi", "-f", "$id:another")
+        execCond("docker", "rmi", "-f", "$id:latest")
+        execCond("docker", "rmi", "-f", "$id:2.0")
+        execCond("docker", "rmi", "-f", "$id-new:latest")
+        execCond("docker", "rmi", "-f", "$id:new-latest")
     }
 
     @Test
@@ -315,12 +315,12 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         )
         val result = gradleRunner("dockerTag", "printInfo").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerTag")?.outcome)
-        execCond("docker rmi -f $id")
-        execCond("docker rmi -f $id:latest")
-        execCond("docker rmi -f $id:another")
-        execCond("docker rmi -f $id:2.0")
-        execCond("docker rmi -f $id-new:latest")
-        execCond("docker rmi -f $id:new-latest")
+        execCond("docker", "rmi", "-f", id)
+        execCond("docker", "rmi", "-f", "$id:latest")
+        execCond("docker", "rmi", "-f", "$id:another")
+        execCond("docker", "rmi", "-f", "$id:2.0")
+        execCond("docker", "rmi", "-f", "$id-new:latest")
+        execCond("docker", "rmi", "-f", "$id:new-latest")
     }
 
     @Test
@@ -346,9 +346,9 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         )
         val result = gradleRunner("docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
-        assertTrue(exec("docker inspect --format '{{.Config.Env}}' $id").contains("ENV_BUILD_ARG_NO_DEFAULT=gradleBuildArg"))
-        assertTrue(exec("docker inspect --format '{{.Config.Env}}' $id").contains("BUILD_ARG_WITH_DEFAULT=gradleOverrideBuildArg"))
-        execCond("docker rmi -f $id")
+        assertTrue(exec("docker", "inspect", "--format", "{{.Config.Env}}", id).contains("ENV_BUILD_ARG_NO_DEFAULT=gradleBuildArg"))
+        assertTrue(exec("docker", "inspect", "--format", "{{.Config.Env}}", id).contains("BUILD_ARG_WITH_DEFAULT=gradleOverrideBuildArg"))
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -368,13 +368,13 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         )
         createFile(filename)
         val result1 = gradleRunner("--info", "docker").build()
-        val imageId1 = exec("docker inspect --format=\"{{.Id}}\" $id")
+        val imageId1 = exec("docker", "inspect", "--format={{.Id}}", id)
         val result2 = gradleRunner("--info", "docker").build()
-        val imageId2 = exec("docker inspect --format=\"{{.Id}}\" $id")
+        val imageId2 = exec("docker", "inspect", "--format={{.Id}}", id)
         assertEquals(TaskOutcome.SUCCESS, result1.task(":docker")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result2.task(":docker")?.outcome)
         assertTrue(imageId1 != imageId2)
-        execCond("docker rmi -f $id")
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -390,11 +390,11 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             }
             """.trimIndent(),
         )
-        execCond("docker pull alpine:3.2")
+        execCond("docker", "pull", "alpine:3.2")
         val result = gradleRunner("-i", "docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
         assertTrue(result.output.contains("load metadata for docker.io/library/alpine"))
-        execCond("docker rmi -f $id")
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -417,7 +417,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
                 result.output.contains("No such network: foobar") ||
                 result.output.contains("network mode \"foobar\" not supported by buildkit"),
         )
-        execCond("docker rmi -f $id")
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -438,7 +438,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         val result = gradleRunner("docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerPrepare")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
-        execCond("docker rmi -f $id")
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -469,7 +469,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         assertEquals(TaskOutcome.SUCCESS, result.task(":myTgz")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerPrepare")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
-        execCond("docker rmi -f $id")
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test
@@ -488,8 +488,8 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         )
         val result = gradleRunner("docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
-        assertTrue(exec("docker inspect --format '{{.Config.Labels}}' $id").contains("test-label"))
-        execCond("docker rmi -f $id")
+        assertTrue(exec("docker", "inspect", "--format", "{{.Config.Labels}}", id).contains("test-label"))
+        execCond("docker", "rmi", "-f", id)
     }
 
     @Test

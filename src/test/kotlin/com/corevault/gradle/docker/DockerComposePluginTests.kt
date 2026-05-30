@@ -155,8 +155,8 @@ class DockerComposePluginTests : AbstractPluginTest() {
         )
         gradleRunner("dockerComposeUp").build()
         assertTrue(file("foobarbaz").exists())
-        execCond("docker stop helloworld")
-        execCond("docker rm helloworld")
+        execCond("docker", "stop", "helloworld")
+        execCond("docker", "rm", "helloworld")
     }
 
     @Test
@@ -185,8 +185,8 @@ class DockerComposePluginTests : AbstractPluginTest() {
         )
         gradleRunner("dockerComposeUp").build()
         assertTrue(file("qux").exists())
-        execCond("docker stop helloworld2")
-        execCond("docker rm helloworld2")
+        execCond("docker", "stop", "helloworld2")
+        execCond("docker", "rm", "helloworld2")
     }
 
     @Test

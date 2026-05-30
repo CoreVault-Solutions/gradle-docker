@@ -67,11 +67,16 @@ class DockerRunPlugin : Plugin<Project> {
                 runArgs.add("-v")
                 runArgs.add("${localFile.absolutePath}:$value")
             }
+            val containerName = ext.name?.takeIf { it.isNotBlank() }
+                ?: throw IllegalStateException("dockerRun.name is required and must be non-empty.")
+            val imageName = ext.image?.takeIf { it.isNotBlank() }
+                ?: throw IllegalStateException("dockerRun.image is required and must be non-empty.")
+
             runArgs.addAll(ext.env.flatMap { (k, v) -> listOf("-e", "$k=$v") })
             runArgs.add("--name")
-            runArgs.add(ext.name!!)
+            runArgs.add(containerName)
             if (ext.arguments.isNotEmpty()) runArgs.addAll(ext.arguments)
-            runArgs.add(ext.image!!)
+            runArgs.add(imageName)
             if (ext.command.isNotEmpty()) runArgs.addAll(ext.command)
 
             val dockerRun = project.tasks.register("dockerRun", Exec::class.java) { t ->

@@ -47,15 +47,21 @@ class DockerComposePlugin : Plugin<Project> {
         project.afterEvaluate {
             val ext = project.extensions.findByType(DockerComposeExtension::class.java)!!
 
+            // Split the configured compose command (e.g. "docker-compose" or "docker compose"):
+            // first token is the executable, remaining tokens are leading args.
+            val composeTokens = ext.composeCommand.trim().split(Regex("\\s+"))
+            val executable = composeTokens.first()
+            val leadingArgs: List<Any> = composeTokens.drop(1)
+
             // Configure the exec tasks now that the extension is fully evaluated
             dockerComposeUp.get().let { up ->
-                up.executable("docker-compose")
-                up.args("-f", ext.dockerComposeFile, "up", "-d")
+                up.executable(executable)
+                up.args(*(leadingArgs + listOf<Any>("-f", ext.dockerComposeFile, "up", "-d")).toTypedArray())
             }
 
             dockerComposeDown.get().let { down ->
-                down.executable("docker-compose")
-                down.args("-f", ext.dockerComposeFile, "down")
+                down.executable(executable)
+                down.args(*(leadingArgs + listOf<Any>("-f", ext.dockerComposeFile, "down")).toTypedArray())
             }
         }
     }
