@@ -117,7 +117,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             result.output.contains(
                 "Docker label 'test_label' contains illegal characters. " +
                     "Label keys must only contain lowercase alphanumeric, `.`, or `-` characters " +
-                    "(must match ^[a-z0-9.-]*\$).",
+                    "(must match ^[a-z0-9.-]+\$).",
             ),
         )
     }

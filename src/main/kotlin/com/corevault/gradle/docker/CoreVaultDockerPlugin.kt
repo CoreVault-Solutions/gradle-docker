@@ -105,7 +105,11 @@ class CoreVaultDockerPlugin @Inject constructor(
             // Capture raw tag data at configuration time; resolve imageName at execution time via doFirst.
             val tags = mutableMapOf<String, Pair<String, (String) -> String>>()
             ext.namedTags.forEach { (taskName, tagName) ->
-                tags[generateTagTaskName(taskName)] = Pair(tagName) { _ -> tagName }
+                val normalizedTaskName = generateTagTaskName(taskName)
+                require(!tags.containsKey(normalizedTaskName)) {
+                    "Task name '$normalizedTaskName' (from named tag '$taskName') is existed."
+                }
+                tags[normalizedTaskName] = Pair(tagName) { _ -> tagName }
             }
             if (ext.getTags().isNotEmpty()) {
                 ext.getTags().forEach { unresolvedTagName ->
@@ -154,7 +158,7 @@ class CoreVaultDockerPlugin @Inject constructor(
     companion object {
         @Suppress("unused")
         private val log: Logger = Logging.getLogger(CoreVaultDockerPlugin::class.java)
-        private val LABEL_KEY_PATTERN: Pattern = Pattern.compile("^[a-z0-9.-]*$")
+        private val LABEL_KEY_PATTERN: Pattern = Pattern.compile("^[a-z0-9.-]+$")
 
         private fun buildCommandLine(ext: DockerExtension): List<String> {
             val cmdList = mutableListOf("docker")
