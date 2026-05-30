@@ -108,7 +108,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
         )
         val result = gradleRunner("docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":docker")?.outcome)
-        assertTrue(exec("docker", "inspect", "--format", "{{.Config.Labels}}", id).contains("test-label"))
+        assertTrue(exec("docker", "inspect", "--format", "{{.Config.Labels}}", id).contains("test-label:test-value"))
         assertTrue(exec("docker", "inspect", "--format", "{{.Config.Env}}", id).contains("ENV_BUILD_ARG_NO_DEFAULT=gradleBuildArg"))
         execCond("docker", "rmi", "-f", id)
     }
@@ -119,7 +119,6 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
 
     @Test
     fun `docker-compose generates from template (kotlin dsl)`() {
-        file("Dockerfile").writeText("Foo")
         file("docker-compose.yml.template").writeText(
             """
             service1:
@@ -177,6 +176,8 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerRunStatus")?.outcome)
         assertTrue(result.output.contains("Docker container 'bar-kts' is RUNNING."))
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerStop")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, offline.task(":dockerRunStatus")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, offline.task(":dockerRemoveContainer")?.outcome)
         assertTrue(offline.output.contains("Docker container 'bar-kts' is STOPPED."))
     }
 }
