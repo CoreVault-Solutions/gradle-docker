@@ -15,9 +15,7 @@ open class DockerExtension(val project: Project) {
     var imageName: String? = null
         get() {
             val name = field
-            if (name.isNullOrEmpty()) {
-                throw IllegalStateException("imageName is a required docker configuration item.")
-            }
+            check(!name.isNullOrEmpty()) { "imageName is a required docker configuration item." }
             return name
         }
     private var dockerfile: File? = null
@@ -47,16 +45,14 @@ open class DockerExtension(val project: Project) {
     private val copySpec: CopySpec = project.copySpec()
 
     fun setDockerfile(dockerfile: File) {
-        if (!dockerfile.exists()) {
-            throw IllegalStateException("Could not find specified Dockerfile: $dockerfile")
-        }
+        check(dockerfile.exists()) { "Could not find specified Dockerfile: $dockerfile" }
         this.dockerfile = dockerfile
     }
 
     fun setDockerComposeTemplate(dockerComposeTemplate: String) {
         this.dockerComposeTemplate = dockerComposeTemplate
-        if (!project.file(dockerComposeTemplate).exists()) {
-            throw IllegalStateException("Could not find specified template file: ${project.file(dockerComposeTemplate)}")
+        check(project.file(dockerComposeTemplate).exists()) {
+            "Could not find specified template file: ${project.file(dockerComposeTemplate)}"
         }
     }
 

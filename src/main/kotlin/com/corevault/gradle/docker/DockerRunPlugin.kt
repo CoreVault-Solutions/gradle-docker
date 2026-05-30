@@ -6,6 +6,11 @@ import org.gradle.api.tasks.Exec
 import java.io.ByteArrayOutputStream
 
 class DockerRunPlugin : Plugin<Project> {
+
+    private companion object {
+        const val GROUP = "Docker Run"
+    }
+
     override fun apply(project: Project) {
         val ext = project.extensions.create("dockerRun", DockerRunExtension::class.java)
 
@@ -13,7 +18,7 @@ class DockerRunPlugin : Plugin<Project> {
         project.afterEvaluate {
             val statusOutput = ByteArrayOutputStream()
             val dockerRunStatus = project.tasks.register("dockerRunStatus", Exec::class.java) { t ->
-                t.group = "Docker Run"
+                t.group = GROUP
                 t.description = "Checks the run status of the container"
                 t.standardOutput = statusOutput
                 t.commandLine("docker", "inspect", "--format={{.State.Running}}", ext.name)
@@ -28,7 +33,7 @@ class DockerRunPlugin : Plugin<Project> {
 
             val networkOutput = ByteArrayOutputStream()
             val dockerNetworkModeStatus = project.tasks.register("dockerNetworkModeStatus", Exec::class.java) { t ->
-                t.group = "Docker Run"
+                t.group = GROUP
                 t.description = "Checks the network configuration of the container"
                 t.standardOutput = networkOutput
                 t.commandLine("docker", "inspect", "--format={{.HostConfig.NetworkMode}}", ext.name)
@@ -80,7 +85,7 @@ class DockerRunPlugin : Plugin<Project> {
             if (ext.command.isNotEmpty()) runArgs.addAll(ext.command)
 
             val dockerRun = project.tasks.register("dockerRun", Exec::class.java) { t ->
-                t.group = "Docker Run"
+                t.group = GROUP
                 t.description = "Runs the specified container with port mappings"
                 t.isIgnoreExitValue = ext.ignoreExitValue
                 t.commandLine(runArgs)
@@ -90,14 +95,14 @@ class DockerRunPlugin : Plugin<Project> {
             }
 
             project.tasks.register("dockerStop", Exec::class.java) { t ->
-                t.group = "Docker Run"
+                t.group = GROUP
                 t.description = "Stops the named container if it is running"
                 t.isIgnoreExitValue = true
                 t.commandLine("docker", "stop", ext.name)
             }
 
             project.tasks.register("dockerRemoveContainer", Exec::class.java) { t ->
-                t.group = "Docker Run"
+                t.group = GROUP
                 t.description = "Removes the persistent container associated with the Docker Run tasks"
                 t.isIgnoreExitValue = true
                 t.commandLine("docker", "rm", ext.name)

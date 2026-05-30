@@ -53,9 +53,7 @@ open class GenerateDockerCompose : DefaultTask() {
     @TaskAction
     fun run() {
         val templateFile = template
-        if (!templateFile.exists()) {
-            throw IllegalStateException("Could not find specified template file ${templateFile}")
-        }
+        check(templateFile.exists()) { "Could not find specified template file $templateFile" }
 
         val tokenMap = mutableMapOf<String, String>()
         moduleDependencies.forEach { id ->

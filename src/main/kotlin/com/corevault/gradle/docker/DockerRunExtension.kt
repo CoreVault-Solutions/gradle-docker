@@ -47,10 +47,7 @@ open class DockerRunExtension {
     }
 
     private fun checkPortIsValid(port: String) {
-        val value = port.toIntOrNull()
-            ?: throw IllegalArgumentException("Port must be a number, got: $port")
-        if (value <= 0 || value > 65535) {
-            throw IllegalArgumentException("Port must be in the range [1,65535], got: $port")
-        }
+        val value = requireNotNull(port.toIntOrNull()) { "Port must be a number, got: $port" }
+        require(value in 1..65535) { "Port must be in the range [1,65535], got: $port" }
     }
 }

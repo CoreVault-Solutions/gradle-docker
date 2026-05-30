@@ -120,7 +120,8 @@ class CoreVaultDockerPlugin @Inject constructor(
             }
 
             tags.forEach { (taskName, tagInfo) ->
-                val (displayName, tagResolver) = tagInfo
+                // tagInfo.first = display name; tagInfo.second = (imageName) -> final tag
+                val displayName = tagInfo.first
 
                 val tagSubTask = project.tasks.register("dockerTag$taskName", Exec::class.java) { t ->
                     t.group = "Docker"
@@ -132,7 +133,7 @@ class CoreVaultDockerPlugin @Inject constructor(
                 val tagExec = tagSubTask.get()
                 tagExec.doFirst {
                     val resolvedImageName = ext.imageName!!
-                    tagExec.args(resolvedImageName, tagResolver(resolvedImageName))
+                    tagExec.args(resolvedImageName, tagInfo.second(resolvedImageName))
                 }
                 tag.get().dependsOn(tagSubTask)
 
@@ -146,7 +147,7 @@ class CoreVaultDockerPlugin @Inject constructor(
                 val pushExec = pushSubTask.get()
                 pushExec.doFirst {
                     val resolvedImageName = ext.imageName!!
-                    pushExec.args(tagResolver(resolvedImageName))
+                    pushExec.args(tagInfo.second(resolvedImageName))
                 }
                 pushAllTags.get().dependsOn(pushSubTask)
             }
@@ -201,7 +202,6 @@ class CoreVaultDockerPlugin @Inject constructor(
             return cmdList
         }
 
-        @Deprecated("")
         internal fun computeName(name: String, tag: String): String {
             val firstAt = tag.indexOf("@")
             val tagValue = if (firstAt > 0) tag.substring(firstAt + 1) else tag
@@ -215,7 +215,6 @@ class CoreVaultDockerPlugin @Inject constructor(
             }
         }
 
-        @Deprecated("")
         internal fun generateTagTaskName(name: String): String {
             val firstAt = name.indexOf("@")
             val tagTaskName =
