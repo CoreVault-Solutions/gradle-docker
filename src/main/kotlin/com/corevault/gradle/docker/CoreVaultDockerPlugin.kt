@@ -86,8 +86,8 @@ class CoreVaultDockerPlugin @Inject constructor(
 
             val prepareTask = prepare.get()
             prepareTask.with(ext.getCopySpec())
-            val dockerfileName = ext.getResolvedDockerfile()!!.name
-            prepareTask.from(ext.getResolvedDockerfile()).rename { fileName: String ->
+            val dockerfileName = ext.resolvedDockerfile!!.name
+            prepareTask.from(ext.resolvedDockerfile).rename { fileName: String ->
                 fileName.replace(dockerfileName, "Dockerfile")
             }
             prepareTask.into(dockerDirProvider.get())
@@ -115,8 +115,8 @@ class CoreVaultDockerPlugin @Inject constructor(
                 // For named tags the supplied value is already the fully-qualified tag.
                 tags[normalizedTaskName] = Pair(tagName, tagName)
             }
-            if (ext.getTags().isNotEmpty()) {
-                ext.getTags().forEach { unresolvedTagName ->
+            if (ext.allTags.isNotEmpty()) {
+                ext.allTags.forEach { unresolvedTagName ->
                     val taskName = generateTagTaskName(unresolvedTagName)
                     require(!tags.containsKey(taskName)) { "Task name '$taskName' already exists." }
                     tags[taskName] = Pair(unresolvedTagName, computeName(imageName, unresolvedTagName))
@@ -145,7 +145,7 @@ class CoreVaultDockerPlugin @Inject constructor(
                 pushAllTags.get().dependsOn(pushSubTask)
             }
 
-            dockerfileZip.get().from(ext.getResolvedDockerfile())
+            dockerfileZip.get().from(ext.resolvedDockerfile)
         }
     }
 
@@ -156,37 +156,37 @@ class CoreVaultDockerPlugin @Inject constructor(
 
         private fun buildCommandLine(ext: DockerExtension): List<String> {
             val cmdList = mutableListOf("docker")
-            if (ext.getBuildx()) {
+            if (ext.buildx) {
                 appendBuildxArgs(cmdList, ext)
             } else {
                 cmdList.add("build")
             }
             if (ext.noCache) cmdList.add("--no-cache")
-            if (ext.getNetwork() != null) cmdList.addAll(listOf("--network", ext.getNetwork()!!))
-            for ((key, value) in ext.getBuildArgs()) {
+            if (ext.network != null) cmdList.addAll(listOf("--network", ext.network!!))
+            for ((key, value) in ext.buildArgs) {
                 cmdList.addAll(listOf("--build-arg", "$key=$value"))
             }
             for (secret in ext.secrets) {
                 cmdList.addAll(listOf("--secret", secret))
             }
             appendLabelArgs(cmdList, ext)
-            if (ext.getPull()) cmdList.add("--pull")
+            if (ext.pull) cmdList.add("--pull")
             cmdList.addAll(listOf("-t", ext.imageName!!, "."))
             return cmdList
         }
 
         private fun appendBuildxArgs(cmdList: MutableList<String>, ext: DockerExtension) {
             cmdList.addAll(listOf("buildx", "build"))
-            if (ext.getPlatform().isNotEmpty()) {
-                cmdList.addAll(listOf("--platform", ext.getPlatform().joinToString(",")))
+            if (ext.platform.isNotEmpty()) {
+                cmdList.addAll(listOf("--platform", ext.platform.joinToString(",")))
             }
-            if (ext.getLoad()) cmdList.add("--load")
-            if (ext.getPush()) {
+            if (ext.load) cmdList.add("--load")
+            if (ext.push) {
                 cmdList.add("--push")
-                if (ext.getLoad()) throw RuntimeException("cannot combine 'push' and 'load' options")
+                if (ext.load) throw RuntimeException("cannot combine 'push' and 'load' options")
             }
-            if (ext.getBuilder() != null) {
-                cmdList.addAll(listOf("--builder", ext.getBuilder()!!))
+            if (ext.builder != null) {
+                cmdList.addAll(listOf("--builder", ext.builder!!))
             }
         }
 

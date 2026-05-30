@@ -44,7 +44,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
             }
             docker {
                 imageName = "$id"
-                tags("latest", "another", "withTaskName@2.0", "newImageName@$id-new:latest")
+                tags = setOf("latest", "another", "withTaskName@2.0", "newImageName@$id-new:latest")
                 tag("withTaskNameByTag", "$id:new-latest")
             }
             """.trimIndent(),
@@ -104,7 +104,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
             docker {
                 imageName = "$id"
                 labels["test-label"] = "test-value"
-                buildArgs(mapOf("BUILD_ARG_NO_DEFAULT" to "gradleBuildArg"))
+                buildArgs = mapOf("BUILD_ARG_NO_DEFAULT" to "gradleBuildArg")
             }
             """.trimIndent(),
         )

@@ -12,37 +12,49 @@ open class DockerExtension(val project: Project) {
     }
 
     var secrets: MutableList<String> = mutableListOf()
+
     var imageName: String? = null
         get() {
             val name = field
             check(!name.isNullOrEmpty()) { "imageName is a required docker configuration item." }
             return name
         }
+
     private var dockerfile: File? = null
     private var dockerComposeTemplate: String = "docker-compose.yml.template"
     private var dockerComposeFile: String = "docker-compose.yml"
     private var dependencies: Set<Task> = emptySet()
-    private var tags: Set<String> = emptySet()
+
+    /** Tags to apply to the image. A 'latest' tag is always added on top — see [allTags]. */
+    var tags: Set<String> = emptySet()
+
     var namedTags: HashMap<String, String> = HashMap()
         set(value) {
             field = HashMap(value)
         }
     var labels: HashMap<String, String> = HashMap()
-    private var buildArgs: Map<String, String> = emptyMap()
-    private var pull: Boolean = false
+    var buildArgs: Map<String, String> = emptyMap()
+    var pull: Boolean = false
     var noCache: Boolean = false
-    private var network: String? = null
-    private var buildx: Boolean = false
-    private var platform: Set<String> = emptySet()
-    private var load: Boolean = false
-    private var push: Boolean = false
-    private var builder: String? = null
+    var network: String? = null
+    var buildx: Boolean = false
+    var platform: Set<String> = emptySet()
+    var load: Boolean = false
+    var push: Boolean = false
+    var builder: String? = null
 
-    private var resolvedDockerfile: File? = null
-    private var resolvedDockerComposeTemplate: File? = null
-    private var resolvedDockerComposeFile: File? = null
+    var resolvedDockerfile: File? = null
+        private set
+    var resolvedDockerComposeTemplate: File? = null
+        private set
+    var resolvedDockerComposeFile: File? = null
+        private set
 
     private val copySpec: CopySpec = project.copySpec()
+
+    /** The full set of tags to apply, always including 'latest'. */
+    val allTags: Set<String>
+        get() = tags + "latest"
 
     fun setDockerfile(dockerfile: File) {
         check(dockerfile.exists()) { "Could not find specified Dockerfile: $dockerfile" }
@@ -68,31 +80,11 @@ open class DockerExtension(val project: Project) {
 
     fun files(vararg files: Any): CopySpec = copySpec.from(*files)
 
-    fun getTags(): Set<String> {
-        val result = HashSet(this.tags)
-        result.add("latest")
-        return result.toSet()
-    }
-
-    @Deprecated(
-        "Use tag(taskName, tag) for named tags or configure namedTags property directly",
-        ReplaceWith("tag(taskName, tag)"),
-    )
-    fun tags(vararg args: String) {
-        this.tags = args.toSet()
-    }
-
     fun tag(taskName: String, tag: String) {
         if (namedTags.putIfAbsent(taskName, tag) != null) {
             project.logger.warn("Tag $taskName already exists.")
         }
     }
-
-    fun getResolvedDockerfile(): File? = resolvedDockerfile
-
-    fun getResolvedDockerComposeTemplate(): File? = resolvedDockerComposeTemplate
-
-    fun getResolvedDockerComposeFile(): File? = resolvedDockerComposeFile
 
     fun getCopySpec(): CopySpec = copySpec
 
@@ -100,53 +92,5 @@ open class DockerExtension(val project: Project) {
         resolvedDockerfile = dockerfile ?: project.file(DEFAULT_DOCKERFILE_PATH)
         resolvedDockerComposeFile = project.file(dockerComposeFile)
         resolvedDockerComposeTemplate = project.file(dockerComposeTemplate)
-    }
-
-    fun getBuildArgs(): Map<String, String> = buildArgs
-
-    fun getNetwork(): String? = network
-
-    fun setNetwork(network: String) {
-        this.network = network
-    }
-
-    fun buildArgs(buildArgs: Map<String, String>) {
-        this.buildArgs = buildArgs.toMap()
-    }
-
-    fun getPull(): Boolean = pull
-
-    fun pull(pull: Boolean) {
-        this.pull = pull
-    }
-
-    fun getLoad(): Boolean = load
-
-    fun load(load: Boolean) {
-        this.load = load
-    }
-
-    fun getPush(): Boolean = push
-
-    fun push(push: Boolean) {
-        this.push = push
-    }
-
-    fun getBuildx(): Boolean = buildx
-
-    fun buildx(buildx: Boolean) {
-        this.buildx = buildx
-    }
-
-    fun getPlatform(): Set<String> = platform
-
-    fun platform(vararg args: String) {
-        this.platform = args.toSet()
-    }
-
-    fun getBuilder(): String? = builder
-
-    fun builder(builder: String) {
-        this.builder = builder
     }
 }

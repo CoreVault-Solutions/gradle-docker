@@ -156,7 +156,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             }
             docker {
                 imageName = '$id'
-                tags 'latest', 'another', 'withTaskName@2.0', 'newImageName@${id}-new:latest'
+                tags = ['latest', 'another', 'withTaskName@2.0', "newImageName@${id}-new:latest"]
                 tag 'withTaskNameByTag', '${id}:new-latest'
             }
             """.trimIndent(),
@@ -220,7 +220,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             plugins { id 'com.corevault.docker' }
             docker {
                 imageName = 'cc-image'
-                tags 'latest', 'v1'
+                tags = ['latest', 'v1']
                 labels['owner'] = 'corevault'
             }
             """.trimIndent(),
@@ -311,9 +311,9 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             docker {
                 imageName = '$id'
                 files "$filename"
-                buildx true
-                load true
-                platform 'linux/arm64'
+                buildx = true
+                load = true
+                platform = ['linux/arm64']
             }
             """.trimIndent(),
         )
@@ -334,7 +334,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             plugins { id 'com.corevault.docker' }
             docker {
                 imageName = '$id'
-                tags 'latest', 'another', 'withTaskName@2.0', 'newImageName@${id}-new:latest'
+                tags = ['latest', 'another', 'withTaskName@2.0', "newImageName@${id}-new:latest"]
                 tag 'withTaskNameByTag', '${id}:new-latest'
             }
             """.trimIndent(),
@@ -361,7 +361,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             plugins { id 'com.corevault.docker' }
             docker {
                 imageName = '$id'
-                tags 'latest', 'another', 'withTaskName@2.0', 'newImageName@${id}-new:latest'
+                tags = ['latest', 'another', 'withTaskName@2.0', "newImageName@${id}-new:latest"]
                 tag 'withTaskNameByTag', '${id}:new-latest'
             }
             task printInfo {
@@ -409,7 +409,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             plugins { id 'com.corevault.docker' }
             docker {
                 imageName = '$id'
-                buildArgs([BUILD_ARG_NO_DEFAULT: 'gradleBuildArg', BUILD_ARG_WITH_DEFAULT: 'gradleOverrideBuildArg'])
+                buildArgs = [BUILD_ARG_NO_DEFAULT: 'gradleBuildArg', BUILD_ARG_WITH_DEFAULT: 'gradleOverrideBuildArg']
             }
             """.trimIndent(),
         )
@@ -457,7 +457,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             plugins { id 'com.corevault.docker' }
             docker {
                 imageName = '$id'
-                pull true
+                pull = true
             }
             """.trimIndent(),
         )
@@ -478,7 +478,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             plugins { id 'com.corevault.docker' }
             docker {
                 imageName = '$id'
-                network 'foobar'
+                network = 'foobar'
             }
             """.trimIndent(),
         )
