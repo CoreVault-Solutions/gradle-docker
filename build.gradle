@@ -114,4 +114,7 @@ gradleTestUtils {
 
 tasks.named('test', Test) {
     useJUnitPlatform()
+    // GradleRunner.withDebug(true) runs TestKit builds in-process, so the test JVM must open
+    // java.lang.invoke for the configuration-cache lambda (de)serialization that real daemons do.
+    jvmArgs '--add-opens=java.base/java.lang.invoke=ALL-UNNAMED'
 }

@@ -95,45 +95,43 @@ class CoreVaultDockerPlugin @Inject constructor(
             val dockerDependencies = ext.getDependencies()
             val execTask = execBuild.get()
             execTask.setWorkingDir(dockerDirProvider.get())
-            // Defer commandLine so imageName can be set in an afterEvaluate block
-            execTask.doFirst { execTask.commandLine(buildCommandLine(ext)) }
+            // Resolve the command line at configuration time (not in a doFirst). The task then holds
+            // only serializable state, keeping it compatible with the Gradle configuration cache.
+            execTask.commandLine(buildCommandLine(ext))
             execTask.dependsOn(dockerDependencies)
             execTask.logging.captureStandardOutput(LogLevel.INFO)
             execTask.logging.captureStandardError(LogLevel.ERROR)
 
-            // Build tag map: (displayName, tagResolver(imageName) -> finalTag)
-            // Capture raw tag data at configuration time; resolve imageName at execution time via doFirst.
-            val tags = mutableMapOf<String, Pair<String, (String) -> String>>()
+            val imageName = ext.imageName!!
+
+            // Build tag map: taskName -> (displayName, finalTag). Everything is resolved here, at
+            // configuration time, so the tag/push tasks capture only plain strings.
+            val tags = mutableMapOf<String, Pair<String, String>>()
             ext.namedTags.forEach { (taskName, tagName) ->
                 val normalizedTaskName = generateTagTaskName(taskName)
                 require(!tags.containsKey(normalizedTaskName)) {
                     "Task name '$normalizedTaskName' (from named tag '$taskName') already exists."
                 }
-                tags[normalizedTaskName] = Pair(tagName) { _ -> tagName }
+                // For named tags the supplied value is already the fully-qualified tag.
+                tags[normalizedTaskName] = Pair(tagName, tagName)
             }
             if (ext.getTags().isNotEmpty()) {
                 ext.getTags().forEach { unresolvedTagName ->
                     val taskName = generateTagTaskName(unresolvedTagName)
                     require(!tags.containsKey(taskName)) { "Task name '$taskName' already exists." }
-                    tags[taskName] = Pair(unresolvedTagName) { imgName -> computeName(imgName, unresolvedTagName) }
+                    tags[taskName] = Pair(unresolvedTagName, computeName(imageName, unresolvedTagName))
                 }
             }
 
             tags.forEach { (taskName, tagInfo) ->
-                // tagInfo.first = display name; tagInfo.second = (imageName) -> final tag
-                val displayName = tagInfo.first
+                val (displayName, finalTag) = tagInfo
 
                 val tagSubTask = project.tasks.register("dockerTag$taskName", Exec::class.java) { t ->
                     t.group = "Docker"
                     t.description = "Tags Docker image with tag '$displayName'"
                     t.setWorkingDir(dockerDirProvider.get())
-                    t.commandLine("docker", "tag")
+                    t.commandLine("docker", "tag", imageName, finalTag)
                     t.dependsOn(execBuild)
-                }
-                val tagExec = tagSubTask.get()
-                tagExec.doFirst {
-                    val resolvedImageName = ext.imageName!!
-                    tagExec.args(resolvedImageName, tagInfo.second(resolvedImageName))
                 }
                 tag.get().dependsOn(tagSubTask)
 
@@ -141,13 +139,8 @@ class CoreVaultDockerPlugin @Inject constructor(
                     t.group = "Docker"
                     t.description = "Pushes the Docker image with tag '$displayName'"
                     t.setWorkingDir(dockerDirProvider.get())
-                    t.commandLine("docker", "push")
+                    t.commandLine("docker", "push", finalTag)
                     t.dependsOn(tagSubTask)
-                }
-                val pushExec = pushSubTask.get()
-                pushExec.doFirst {
-                    val resolvedImageName = ext.imageName!!
-                    pushExec.args(tagInfo.second(resolvedImageName))
                 }
                 pushAllTags.get().dependsOn(pushSubTask)
             }

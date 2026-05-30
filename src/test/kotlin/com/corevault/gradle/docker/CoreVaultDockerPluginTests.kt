@@ -3,6 +3,7 @@ package com.corevault.gradle.docker
 import org.gradle.testkit.runner.TaskOutcome
 import java.io.File
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -211,6 +212,28 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         assertEquals(TaskOutcome.SUCCESS, result.task(":tasks")?.outcome)
     }
 
+    @Test
+    fun `docker tasks are configuration-cache compatible`() {
+        file("Dockerfile").writeText("FROM alpine:3.2\n")
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevault.docker' }
+            docker {
+                imageName = 'cc-image'
+                tags 'latest', 'v1'
+                labels['owner'] = 'corevault'
+            }
+            """.trimIndent(),
+        )
+        // --dry-run still configures the task graph and stores the configuration cache, so a
+        // non-serializable task (e.g. one capturing Project) surfaces here without a Docker daemon.
+        val result = gradleRunner("docker", "dockerTag", "--configuration-cache", "--dry-run").build()
+        assertFalse(result.output.contains("problem was found storing the configuration cache"))
+        assertFalse(result.output.contains("problems were found storing the configuration cache"))
+        // Guard specifically against the Project-capture regression this fixes.
+        assertFalse(result.output.contains("cannot serialize object of type") && result.output.contains("Project"))
+    }
+
     // -------------------------------------------------------------------------
     // Integration tests — require a Docker daemon
     // -------------------------------------------------------------------------
@@ -302,7 +325,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
     }
 
     @Test
-    fun `does not throw if name is configured after evaluation phase`() {
+    fun `applies all configured tags`() {
         assumeDockerAvailable()
         val id = "id6"
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
@@ -310,11 +333,9 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             """
             plugins { id 'com.corevault.docker' }
             docker {
+                imageName = '$id'
                 tags 'latest', 'another', 'withTaskName@2.0', 'newImageName@${id}-new:latest'
                 tag 'withTaskNameByTag', '${id}:new-latest'
-            }
-            afterEvaluate {
-                docker.imageName = '$id'
             }
             """.trimIndent(),
         )
@@ -339,12 +360,9 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             """
             plugins { id 'com.corevault.docker' }
             docker {
-                imageName = 'fake-service-name'
+                imageName = '$id'
                 tags 'latest', 'another', 'withTaskName@2.0', 'newImageName@${id}-new:latest'
                 tag 'withTaskNameByTag', '${id}:new-latest'
-            }
-            afterEvaluate {
-                docker.imageName = '$id'
             }
             task printInfo {
                 doLast {
@@ -358,6 +376,12 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             """.trimIndent(),
         )
         val result = gradleRunner("dockerTag", "printInfo").build()
+        // Tag command lines are resolved at configuration time.
+        assertTrue(result.output.contains("LATEST: [docker, tag, $id, $id:latest]"))
+        assertTrue(result.output.contains("ANOTHER: [docker, tag, $id, $id:another]"))
+        assertTrue(result.output.contains("WITH_TASK_NAME: [docker, tag, $id, $id:2.0]"))
+        assertTrue(result.output.contains("NEW_IMAGE_NAME: [docker, tag, $id, $id-new:latest]"))
+        assertTrue(result.output.contains("WITH_TASK_NAME_BY_TAG: [docker, tag, $id, $id:new-latest]"))
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerTag")?.outcome)
         execCond("docker", "rmi", "-f", id)
         execCond("docker", "rmi", "-f", "$id:latest")
