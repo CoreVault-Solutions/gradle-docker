@@ -186,7 +186,7 @@ class CoreVaultDockerPlugin @Inject constructor(
                 if (!LABEL_KEY_PATTERN.matcher(key).matches()) {
                     throw GradleException(
                         "Docker label '$key' contains illegal characters. " +
-                            "Label keys must only contain lowercase alphanumberic, `.`, or `-` characters " +
+                            "Label keys must only contain lowercase alphanumeric, `.`, or `-` characters " +
                             "(must match ${LABEL_KEY_PATTERN.pattern()}).",
                     )
                 }

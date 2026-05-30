@@ -116,7 +116,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         assertTrue(
             result.output.contains(
                 "Docker label 'test_label' contains illegal characters. " +
-                    "Label keys must only contain lowercase alphanumberic, `.`, or `-` characters " +
+                    "Label keys must only contain lowercase alphanumeric, `.`, or `-` characters " +
                     "(must match ^[a-z0-9.-]*\$).",
             ),
         )
@@ -509,5 +509,6 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         val result = gradleRunner("docker").build()
         assertEquals(TaskOutcome.SUCCESS, result.task(":dockerPrepare")?.outcome)
         assertTrue(file("build/docker/myDir/bar").exists())
+        execCond("docker", "rmi", "-f", id)
     }
 }

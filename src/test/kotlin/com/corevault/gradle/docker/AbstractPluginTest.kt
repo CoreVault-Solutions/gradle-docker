@@ -27,16 +27,21 @@ abstract class AbstractPluginTest {
 
     fun exec(vararg command: String): String {
         val proc = ProcessBuilder(*command).start()
+        // Drain stderr on a separate thread so a full stderr pipe can't deadlock the stdout read.
+        val errGobbler = Thread { proc.errorStream.bufferedReader().readText() }.apply { start() }
         val output = proc.inputStream.bufferedReader().readText()
-        proc.errorStream.bufferedReader().readText()
+        errGobbler.join()
         proc.waitFor()
         return output
     }
 
     fun execCond(vararg command: String): Boolean {
         val proc = ProcessBuilder(*command).start()
-        proc.inputStream.bufferedReader().readText()
-        proc.errorStream.bufferedReader().readText()
+        // Drain both streams concurrently to avoid a full-pipe deadlock.
+        val outGobbler = Thread { proc.inputStream.bufferedReader().readText() }.apply { start() }
+        val errGobbler = Thread { proc.errorStream.bufferedReader().readText() }.apply { start() }
+        outGobbler.join()
+        errGobbler.join()
         proc.waitFor()
         return proc.exitValue() == 0
     }
