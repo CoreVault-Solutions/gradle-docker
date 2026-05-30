@@ -164,18 +164,7 @@ class CoreVaultDockerPlugin @Inject constructor(
         private fun buildCommandLine(ext: DockerExtension): List<String> {
             val cmdList = mutableListOf("docker")
             if (ext.getBuildx()) {
-                cmdList.addAll(listOf("buildx", "build"))
-                if (ext.getPlatform().isNotEmpty()) {
-                    cmdList.addAll(listOf("--platform", ext.getPlatform().joinToString(",")))
-                }
-                if (ext.getLoad()) cmdList.add("--load")
-                if (ext.getPush()) {
-                    cmdList.add("--push")
-                    if (ext.getLoad()) throw RuntimeException("cannot combine 'push' and 'load' options")
-                }
-                if (ext.getBuilder() != null) {
-                    cmdList.addAll(listOf("--builder", ext.getBuilder()!!))
-                }
+                appendBuildxArgs(cmdList, ext)
             } else {
                 cmdList.add("build")
             }
@@ -187,6 +176,28 @@ class CoreVaultDockerPlugin @Inject constructor(
             for (secret in ext.secrets) {
                 cmdList.addAll(listOf("--secret", secret))
             }
+            appendLabelArgs(cmdList, ext)
+            if (ext.getPull()) cmdList.add("--pull")
+            cmdList.addAll(listOf("-t", ext.imageName!!, "."))
+            return cmdList
+        }
+
+        private fun appendBuildxArgs(cmdList: MutableList<String>, ext: DockerExtension) {
+            cmdList.addAll(listOf("buildx", "build"))
+            if (ext.getPlatform().isNotEmpty()) {
+                cmdList.addAll(listOf("--platform", ext.getPlatform().joinToString(",")))
+            }
+            if (ext.getLoad()) cmdList.add("--load")
+            if (ext.getPush()) {
+                cmdList.add("--push")
+                if (ext.getLoad()) throw RuntimeException("cannot combine 'push' and 'load' options")
+            }
+            if (ext.getBuilder() != null) {
+                cmdList.addAll(listOf("--builder", ext.getBuilder()!!))
+            }
+        }
+
+        private fun appendLabelArgs(cmdList: MutableList<String>, ext: DockerExtension) {
             for ((key, value) in ext.labels) {
                 if (!LABEL_KEY_PATTERN.matcher(key).matches()) {
                     throw GradleException(
@@ -197,9 +208,6 @@ class CoreVaultDockerPlugin @Inject constructor(
                 }
                 cmdList.addAll(listOf("--label", "$key=$value"))
             }
-            if (ext.getPull()) cmdList.add("--pull")
-            cmdList.addAll(listOf("-t", ext.imageName!!, "."))
-            return cmdList
         }
 
         internal fun computeName(name: String, tag: String): String {

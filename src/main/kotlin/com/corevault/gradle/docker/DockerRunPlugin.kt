@@ -24,11 +24,8 @@ class DockerRunPlugin : Plugin<Project> {
                 t.commandLine("docker", "inspect", "--format={{.State.Running}}", ext.name)
             }
             dockerRunStatus.get().doLast {
-                if (statusOutput.toString().trim() != "true") {
-                    println("Docker container '${ext.name}' is STOPPED.")
-                } else {
-                    println("Docker container '${ext.name}' is RUNNING.")
-                }
+                val running = statusOutput.toString().trim() == "true"
+                println("Docker container '${ext.name}' is ${if (running) "RUNNING" else "STOPPED"}.")
             }
 
             val networkOutput = ByteArrayOutputStream()
@@ -39,51 +36,10 @@ class DockerRunPlugin : Plugin<Project> {
                 t.commandLine("docker", "inspect", "--format={{.HostConfig.NetworkMode}}", ext.name)
             }
             dockerNetworkModeStatus.get().doLast {
-                val networkMode = networkOutput.toString().trim()
-                when {
-                    networkMode == "default" ->
-                        println("Docker container '${ext.name}' has default network configuration (bridge).")
-                    networkMode == ext.network ->
-                        println("Docker container '${ext.name}' is configured to run with '${ext.network}' network mode.")
-                    else ->
-                        println(
-                            "Docker container '${ext.name}' runs with '$networkMode' network mode " +
-                                "instead of the configured '${ext.network}'.",
-                        )
-                }
+                println(networkModeMessage(ext, networkOutput.toString().trim()))
             }
 
-            val runArgs = mutableListOf("docker", "run")
-            if (ext.daemonize) runArgs.add("-d")
-            if (ext.clean) {
-                runArgs.add("--rm")
-            }
-            if (ext.network != null) runArgs.addAll(listOf("--network", ext.network!!))
-            for (port in ext.ports) {
-                runArgs.add("-p")
-                runArgs.add(port)
-            }
-            for ((key, value) in ext.volumes) {
-                val localFile = project.file(key)
-                if (!localFile.exists()) {
-                    project.logger.warn("ERROR: Local folder $localFile doesn't exist. Mounted volume will not be visible to container")
-                    throw IllegalStateException("Local folder $localFile doesn't exist.")
-                }
-                runArgs.add("-v")
-                runArgs.add("${localFile.absolutePath}:$value")
-            }
-            val containerName = ext.name?.takeIf { it.isNotBlank() }
-                ?: throw IllegalStateException("dockerRun.name is required and must be non-empty.")
-            val imageName = ext.image?.takeIf { it.isNotBlank() }
-                ?: throw IllegalStateException("dockerRun.image is required and must be non-empty.")
-
-            runArgs.addAll(ext.env.flatMap { (k, v) -> listOf("-e", "$k=$v") })
-            runArgs.add("--name")
-            runArgs.add(containerName)
-            if (ext.arguments.isNotEmpty()) runArgs.addAll(ext.arguments)
-            runArgs.add(imageName)
-            if (ext.command.isNotEmpty()) runArgs.addAll(ext.command)
-
+            val runArgs = buildRunArgs(project, ext)
             val dockerRun = project.tasks.register("dockerRun", Exec::class.java) { t ->
                 t.group = GROUP
                 t.description = "Runs the specified container with port mappings"
@@ -108,5 +64,47 @@ class DockerRunPlugin : Plugin<Project> {
                 t.commandLine("docker", "rm", ext.name)
             }
         }
+    }
+
+    private fun networkModeMessage(ext: DockerRunExtension, networkMode: String): String = when {
+        networkMode == "default" ->
+            "Docker container '${ext.name}' has default network configuration (bridge)."
+        networkMode == ext.network ->
+            "Docker container '${ext.name}' is configured to run with '${ext.network}' network mode."
+        else ->
+            "Docker container '${ext.name}' runs with '$networkMode' network mode " +
+                "instead of the configured '${ext.network}'."
+    }
+
+    private fun buildRunArgs(project: Project, ext: DockerRunExtension): List<String> {
+        val containerName = ext.name?.takeIf { it.isNotBlank() }
+            ?: throw IllegalStateException("dockerRun.name is required and must be non-empty.")
+        val imageName = ext.image?.takeIf { it.isNotBlank() }
+            ?: throw IllegalStateException("dockerRun.image is required and must be non-empty.")
+
+        val runArgs = mutableListOf("docker", "run")
+        if (ext.daemonize) runArgs.add("-d")
+        if (ext.clean) runArgs.add("--rm")
+        if (ext.network != null) runArgs.addAll(listOf("--network", ext.network!!))
+        for (port in ext.ports) {
+            runArgs.add("-p")
+            runArgs.add(port)
+        }
+        for ((key, value) in ext.volumes) {
+            val localFile = project.file(key)
+            if (!localFile.exists()) {
+                project.logger.warn("ERROR: Local folder $localFile doesn't exist. Mounted volume will not be visible to container")
+                throw IllegalStateException("Local folder $localFile doesn't exist.")
+            }
+            runArgs.add("-v")
+            runArgs.add("${localFile.absolutePath}:$value")
+        }
+        runArgs.addAll(ext.env.flatMap { (k, v) -> listOf("-e", "$k=$v") })
+        runArgs.add("--name")
+        runArgs.add(containerName)
+        if (ext.arguments.isNotEmpty()) runArgs.addAll(ext.arguments)
+        runArgs.add(imageName)
+        if (ext.command.isNotEmpty()) runArgs.addAll(ext.command)
+        return runArgs
     }
 }
