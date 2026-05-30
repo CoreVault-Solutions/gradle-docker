@@ -19,6 +19,7 @@ buildscript {
         classpath 'com.palantir.gradle.guide:gradle-guide:1.27.0'
         classpath 'com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.8.0'
         classpath 'com.palantir.gradle.idea-language-injector:gradle-idea-language-injector:0.2.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0"
     }
 }
 
@@ -37,6 +38,7 @@ repositories {
 apply plugin: 'com.palantir.external-publish'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'groovy'
+apply plugin: 'org.jetbrains.kotlin.jvm'
 apply plugin: 'com.palantir.baseline'
 apply plugin: 'com.palantir.baseline-error-prone-root'
 apply plugin: 'com.palantir.consistent-versions'
@@ -50,36 +52,42 @@ apply plugin: 'com.palantir.failure-reports'
 apply plugin: 'com.palantir.baseline-java-versions'
 apply plugin: 'com.palantir.jdks.latest'
 
-group 'com.palantir.gradle.docker'
+group 'com.corevault.gradle.docker'
 version System.env.CIRCLE_TAG ?: gitVersion()
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
 
 dependencies {
     api gradleApi()
-    api 'com.google.guava:guava'
 
     testImplementation gradleTestKit()
-    testImplementation 'com.netflix.nebula:nebula-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 gradlePlugin {
     plugins {
         dockerPlugin {
-            id = 'com.palantir.docker'
-            displayName = 'Palantir Gradle Docker'
-            implementationClass = 'com.palantir.gradle.docker.PalantirDockerPlugin'
-            description = 'Gradle Docker is a simple docker orchestrator for executing docker build and push from within Gradle.'
+            id = 'com.corevault.docker'
+            displayName = 'CoreVault Gradle Docker'
+            implementationClass = 'com.corevault.gradle.docker.CoreVaultDockerPlugin'
+            description = 'Simple Docker orchestrator for executing docker build and push from within Gradle.'
         }
         dockerComposePlugin {
-            id = 'com.palantir.docker-compose'
-            displayName = 'Palantir Gradle Docker-Compose'
-            implementationClass = 'com.palantir.gradle.docker.DockerComposePlugin'
-            description = 'Gradle Docker is a simple docker orchestrator for executing docker build and push from within Gradle.'
+            id = 'com.corevault.docker-compose'
+            displayName = 'CoreVault Gradle Docker-Compose'
+            implementationClass = 'com.corevault.gradle.docker.DockerComposePlugin'
+            description = 'Docker Compose orchestrator for docker-compose up/down from within Gradle.'
         }
         dockerRunPlugin {
-            id = 'com.palantir.docker-run'
-            displayName = 'Palantir Gradle Docker-Run'
-            implementationClass = 'com.palantir.gradle.docker.DockerRunPlugin'
-            description = 'Gradle Docker is a simple docker orchestrator for executing docker build and push from within Gradle.'
+            id = 'com.corevault.docker-run'
+            displayName = 'CoreVault Gradle Docker-Run'
+            implementationClass = 'com.corevault.gradle.docker.DockerRunPlugin'
+            description = 'Docker Run task orchestrator for running containers from within Gradle.'
         }
     }
 }
@@ -101,5 +109,9 @@ jdks {
 }
 
 gradleTestUtils {
-    gradleVersions = ['8.14.3']
+    gradleVersions = ['8.14.5', '9.0.0', '9.5.1']
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
 }
