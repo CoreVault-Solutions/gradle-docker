@@ -122,6 +122,24 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         )
     }
 
+    @Test
+    fun `fail with empty label key`() {
+        file("Dockerfile").writeText("FROM alpine:3.2\n")
+        buildFile.writeText(
+            """
+            plugins {
+                id 'com.corevault.docker'
+            }
+            docker {
+                imageName = 'test-empty-label'
+                labels[''] = 'test_value'
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("docker").buildAndFail()
+        assertTrue(result.output.contains("Docker label '' contains illegal characters."))
+    }
+
     // -------------------------------------------------------------------------
     // Task graph test (no Docker required)
     // -------------------------------------------------------------------------
@@ -153,6 +171,26 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         assertTrue(result.output.contains("dockerPushWithTaskName"))
         assertTrue(result.output.contains("dockerPushNewImageName"))
         assertTrue(result.output.contains("dockerPushWithTaskNameByTag"))
+    }
+
+    @Test
+    fun `fails when two named tags normalize to the same task name`() {
+        file("Dockerfile").writeText("FROM alpine:3.2\n")
+        // 'myTag@1' and 'myTag@2' both normalize to the 'MyTag' task name -> collision.
+        buildFile.writeText(
+            """
+            plugins {
+                id 'com.corevault.docker'
+            }
+            docker {
+                imageName = 'collide'
+                tag 'myTag@1', 'collide:1'
+                tag 'myTag@2', 'collide:2'
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("tasks").buildAndFail()
+        assertTrue(result.output.contains("is existed."))
     }
 
     @Test
