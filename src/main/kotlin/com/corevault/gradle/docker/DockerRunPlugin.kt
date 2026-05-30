@@ -95,10 +95,8 @@ class DockerRunPlugin : Plugin<Project> {
         }
         for ((key, value) in ext.volumes) {
             val localFile = project.file(key)
-            if (!localFile.exists()) {
-                throw IllegalStateException(
-                    "Local folder $localFile doesn't exist. Mounted volume will not be visible to container.",
-                )
+            check(localFile.exists()) {
+                "Local folder $localFile doesn't exist. Mounted volume will not be visible to container."
             }
             runArgs.add("-v")
             runArgs.add("${localFile.absolutePath}:$value")
