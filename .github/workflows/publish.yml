@@ -41,9 +41,25 @@ jobs:
         run: ./gradlew publishPlugins --validate-only --stacktrace
       - name: Publish release artifacts
         run: ./gradlew publishAndReleaseToMavenCentral publishPlugins --stacktrace
+      - name: Collect release assets
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${RELEASE_VERSION#v}"
+          mkdir -p build/release-assets
+          cp build/libs/*.jar build/release-assets/
+          cp build/publications/pluginMaven/pom-default.xml "build/release-assets/gradle-docker-${version}.pom"
+          cp build/publications/pluginMaven/module.json "build/release-assets/gradle-docker-${version}.module"
+          (
+            cd build/release-assets
+            sha256sum * > SHA256SUMS
+          )
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           generate_release_notes: true
+          files: |
+            build/release-assets/*
