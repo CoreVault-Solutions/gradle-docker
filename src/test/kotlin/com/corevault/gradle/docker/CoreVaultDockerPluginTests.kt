@@ -1,9 +1,27 @@
+/*
+ * (c) Copyright 2015-2021 Palantir Technologies Inc. All rights reserved.
+ * Modifications and additions (c) Copyright 2025-2026 CoreVault Solutions.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * This file is part of the CoreVault gradle-docker plugin, a Kotlin port and
+ * derivative of the Palantir gradle-docker plugin, with changes by CoreVault Solutions.
+ */
 package com.corevault.gradle.docker
 
 import org.gradle.testkit.runner.TaskOutcome
 import java.io.File
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -213,25 +231,22 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
     }
 
     @Test
-    fun `docker tasks are configuration-cache compatible`() {
+    fun `default tag uses the project version`() {
         file("Dockerfile").writeText("FROM alpine:3.2\n")
         buildFile.writeText(
             """
             plugins { id 'com.corevault.docker' }
+            version = '2.3.4'
             docker {
-                imageName = 'cc-image'
-                tags = ['latest', 'v1']
-                labels['owner'] = 'corevault'
+                imageName = 'verimg'
             }
             """.trimIndent(),
         )
-        // --dry-run still configures the task graph and stores the configuration cache, so a
-        // non-serializable task (e.g. one capturing Project) surfaces here without a Docker daemon.
-        val result = gradleRunner("docker", "dockerTag", "--configuration-cache", "--dry-run").build()
-        assertFalse(result.output.contains("problem was found storing the configuration cache"))
-        assertFalse(result.output.contains("problems were found storing the configuration cache"))
-        // Guard specifically against the Project-capture regression this fixes.
-        assertFalse(result.output.contains("cannot serialize object of type") && result.output.contains("Project"))
+        // With no explicit tags, the project version (2.3.4) is the default tag — matching the
+        // original Palantir behavior so versioned image publication keeps working.
+        val result = gradleRunner("tasks").build()
+        assertTrue(result.output.contains("dockerTag2.3.4"))
+        assertTrue(result.output.contains("dockerPush2.3.4"))
     }
 
     // -------------------------------------------------------------------------

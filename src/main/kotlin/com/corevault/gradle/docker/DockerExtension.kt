@@ -1,3 +1,22 @@
+/*
+ * (c) Copyright 2015-2021 Palantir Technologies Inc. All rights reserved.
+ * Modifications and additions (c) Copyright 2025-2026 CoreVault Solutions.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * This file is part of the CoreVault gradle-docker plugin, a Kotlin port and
+ * derivative of the Palantir gradle-docker plugin, with changes by CoreVault Solutions.
+ */
 package com.corevault.gradle.docker
 
 import org.gradle.api.Project
@@ -25,7 +44,7 @@ open class DockerExtension(val project: Project) {
     private var dockerComposeFile: String = "docker-compose.yml"
     private var dependencies: Set<Task> = emptySet()
 
-    /** Tags to apply to the image. A 'latest' tag is always added on top — see [allTags]. */
+    /** Tags to apply to the image. The project version is always added on top — see [allTags]. */
     var tags: Set<String> = emptySet()
 
     var namedTags: HashMap<String, String> = HashMap()
@@ -52,9 +71,12 @@ open class DockerExtension(val project: Project) {
 
     private val copySpec: CopySpec = project.copySpec()
 
-    /** The full set of tags to apply, always including 'latest'. */
+    /**
+     * The full set of tags to apply, always including the project version (matching the original
+     * Palantir behavior, so a versioned project publishes a version-tagged image).
+     */
     val allTags: Set<String>
-        get() = tags + "latest"
+        get() = tags + project.version.toString()
 
     fun setDockerfile(dockerfile: File) {
         check(dockerfile.exists()) { "Could not find specified Dockerfile: $dockerfile" }
