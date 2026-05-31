@@ -98,6 +98,8 @@ class DockerRunPlugin : Plugin<Project> {
     }
 }
 
+private const val NAME_REQUIRED_MESSAGE = "dockerRun.name is required and must be non-empty."
+
 private fun requireNonBlank(value: String?, message: String): String =
     value?.takeIf { it.isNotBlank() } ?: throw IllegalStateException(message)
 
@@ -134,7 +136,7 @@ abstract class DockerRunTask @Inject constructor(private val execOperations: Exe
 
     @TaskAction
     fun run() {
-        val name = requireNonBlank(containerName.orNull, "dockerRun.name is required and must be non-empty.")
+        val name = requireNonBlank(containerName.orNull, NAME_REQUIRED_MESSAGE)
         val img = requireNonBlank(image.orNull, "dockerRun.image is required and must be non-empty.")
 
         val args = mutableListOf("docker", "run")
@@ -178,7 +180,7 @@ abstract class DockerContainerCommandTask @Inject constructor(
 
     @TaskAction
     fun run() {
-        val name = requireNonBlank(containerName.orNull, "dockerRun.name is required and must be non-empty.")
+        val name = requireNonBlank(containerName.orNull, NAME_REQUIRED_MESSAGE)
         execOperations.exec { spec ->
             spec.commandLine("docker", dockerCommand.get(), name)
             spec.isIgnoreExitValue = true
@@ -196,7 +198,7 @@ abstract class DockerRunStatusTask @Inject constructor(private val execOperation
 
     @TaskAction
     fun check() {
-        val name = requireNonBlank(containerName.orNull, "dockerRun.name is required and must be non-empty.")
+        val name = requireNonBlank(containerName.orNull, NAME_REQUIRED_MESSAGE)
         val output = ByteArrayOutputStream()
         execOperations.exec { spec ->
             spec.commandLine("docker", "inspect", "--format={{.State.Running}}", name)
@@ -220,7 +222,7 @@ abstract class DockerNetworkModeStatusTask @Inject constructor(
 
     @TaskAction
     fun check() {
-        val name = requireNonBlank(containerName.orNull, "dockerRun.name is required and must be non-empty.")
+        val name = requireNonBlank(containerName.orNull, NAME_REQUIRED_MESSAGE)
         val output = ByteArrayOutputStream()
         execOperations.exec { spec ->
             spec.commandLine("docker", "inspect", "--format={{.HostConfig.NetworkMode}}", name)
