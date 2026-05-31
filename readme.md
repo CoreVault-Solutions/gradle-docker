@@ -187,6 +187,12 @@ resolved. The `dockerComposeUp`/`dockerComposeDown` tasks bring the services up
 (detached) and down. The compose CLI defaults to `docker-compose`; set
 `composeCommand 'docker compose'` for the Compose v2 plugin.
 
+> **Execution order:** `dockerComposeUp`/`dockerComposeDown` operate directly on
+> `dockerComposeFile` and are intentionally **not** wired to depend on
+> `generateDockerCompose` — this lets you bring up an existing, hand-written
+> compose file. When using the template workflow, run `generateDockerCompose`
+> first, e.g. `./gradlew generateDockerCompose dockerComposeUp`.
+
 Docker Run Plugin
 -----------------
 
