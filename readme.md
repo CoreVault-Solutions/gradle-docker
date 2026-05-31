@@ -3,7 +3,7 @@ CoreVault Docker Gradle Plugin
 
 > **Fork notice:** This project is a Kotlin port and continuation of the
 > [Palantir `gradle-docker` plugin](https://github.com/palantir/gradle-docker)
-> (Apache 2.0), maintained by CoreVault Solutions starting in late 2025/2026.
+> (Apache 2.0), maintained by CoreVault Solutions since 2025.
 > Plugin IDs have moved from `com.palantir.*` to `com.corevault.*` and the
 > configuration DSL now uses Kotlin-friendly property assignment.
 

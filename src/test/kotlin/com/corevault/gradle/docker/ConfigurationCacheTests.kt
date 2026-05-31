@@ -16,6 +16,7 @@
 package com.corevault.gradle.docker
 
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -32,6 +33,11 @@ class ConfigurationCacheTests : AbstractPluginTest() {
             output.contains("problem was found storing the configuration cache") ||
                 output.contains("problems were found storing the configuration cache"),
             "Configuration cache problems were reported:\n$output",
+        )
+        // Positive signal: prove an entry was actually stored/reused, not merely that no error text appeared.
+        assertTrue(
+            Regex("Configuration cache entry (stored|reused)|Reusing configuration cache").containsMatchIn(output),
+            "Expected the configuration cache to be stored or reused, but no positive signal was found:\n$output",
         )
     }
 

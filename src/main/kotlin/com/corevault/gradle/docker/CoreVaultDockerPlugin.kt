@@ -223,6 +223,9 @@ class CoreVaultDockerPlugin @Inject constructor(
         internal fun computeName(name: String, tag: String): String {
             val firstAt = tag.indexOf("@")
             val tagValue = if (firstAt > 0) tag.substring(firstAt + 1) else tag
+            if (tagValue.isBlank()) {
+                throw GradleException("Docker tag '$tag' must not be empty.")
+            }
             return if (tagValue.contains(":") || tagValue.contains("/")) {
                 tagValue
             } else {
@@ -234,6 +237,9 @@ class CoreVaultDockerPlugin @Inject constructor(
         }
 
         internal fun generateTagTaskName(name: String): String {
+            if (name.isBlank()) {
+                throw GradleException("Docker tag must not be empty.")
+            }
             val firstAt = name.indexOf("@")
             val tagTaskName =
                 when {
@@ -243,6 +249,9 @@ class CoreVaultDockerPlugin @Inject constructor(
                         throw GradleException("Docker tag '$name' must have a task name.")
                     else -> name
                 }
+            if (tagTaskName.isBlank()) {
+                throw GradleException("Task name of docker tag '$name' must not be empty.")
+            }
             return tagTaskName.replaceFirstChar { it.uppercase() }
         }
     }

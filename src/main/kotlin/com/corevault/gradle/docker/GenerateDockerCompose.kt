@@ -77,9 +77,10 @@ abstract class GenerateDockerCompose : DefaultTask() {
         tokenMap.forEach { (token, value) -> result = result.replace(token, value) }
         val unmatchedTokens = Regex("""\{\{.*?\}\}""").findAll(result).map { it.value }.toList()
         if (unmatchedTokens.isNotEmpty()) {
+            // Report only token keys; values may carry sensitive data from extraTemplateTokens.
             throw GradleException(
                 "Failed to resolve Docker dependencies declared in $template: $unmatchedTokens. " +
-                    "Known dependencies: $tokenMap",
+                    "Known tokens: ${tokenMap.keys.sorted()}",
             )
         }
         return result

@@ -48,6 +48,11 @@ abstract class AbstractPluginTest {
      */
     fun assumeDockerAvailable() {
         Assumptions.assumeFalse(isCi(), "Docker-dependent integration test skipped in CI environment")
+        val dockerAvailable = runCatching { execCond("docker", "version") }.getOrDefault(false)
+        Assumptions.assumeTrue(
+            dockerAvailable,
+            "Docker-dependent integration test skipped: docker CLI/daemon unavailable",
+        )
     }
 
     fun gradleRunner(vararg tasks: String): GradleRunner =

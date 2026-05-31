@@ -82,7 +82,8 @@ class DockerComposePlugin : Plugin<Project> {
 
             // Split the configured compose command (e.g. "docker-compose" or "docker compose"):
             // first token is the executable, remaining tokens are leading args.
-            val composeTokens = ext.composeCommand.trim().split(Regex("\\s+"))
+            val composeTokens = ext.composeCommand.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+            require(composeTokens.isNotEmpty()) { "dockerCompose.composeCommand must not be blank." }
             val executable = composeTokens.first()
             val leadingArgs: List<Any> = composeTokens.drop(1)
 

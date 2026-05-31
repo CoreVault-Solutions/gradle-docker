@@ -42,7 +42,7 @@ open class DockerExtension(val project: Project) {
     private var dockerfile: File? = null
     private var dockerComposeTemplate: String = "docker-compose.yml.template"
     private var dockerComposeFile: String = "docker-compose.yml"
-    private var dependencies: Set<Task> = emptySet()
+    private val dependencies: MutableSet<Task> = linkedSetOf()
 
     /** Tags to apply to the image. The project version is always added on top — see [allTags]. */
     var tags: Set<String> = emptySet()
@@ -95,10 +95,10 @@ open class DockerExtension(val project: Project) {
     }
 
     fun dependsOn(vararg args: Task) {
-        this.dependencies = args.toSet()
+        this.dependencies.addAll(args)
     }
 
-    fun getDependencies(): Set<Task> = dependencies
+    fun getDependencies(): Set<Task> = dependencies.toSet()
 
     fun files(vararg files: Any): CopySpec = copySpec.from(*files)
 
