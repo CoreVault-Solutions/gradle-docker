@@ -266,3 +266,28 @@ file and per-file headers for attribution.
 Contributing
 ------------
 Contributions to this project must follow the [contribution guide](CONTRIBUTING.md).
+
+Releasing
+---------
+
+Releases are automated through GitHub Actions. Push a clean Git tag matching
+`v*` (for example `v0.38.0`) to trigger the publish workflow, which releases to
+both Maven Central and the Gradle Plugin Portal.
+
+The repository must have these GitHub Actions secrets configured:
+- `MAVEN_CENTRAL_USERNAME`
+- `MAVEN_CENTRAL_PASSWORD`
+- `SIGNING_KEY`
+- `SIGNING_PASSWORD`
+- `SIGNING_KEY_ID` (optional, only if your signing subkey requires it)
+- `GRADLE_PUBLISH_KEY`
+- `GRADLE_PUBLISH_SECRET`
+
+The workflow maps the Maven Central and signing secrets to the Gradle
+properties expected by the publication plugins. The Plugin Portal credentials
+are consumed directly from `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET`.
+
+The workflow validates the Plugin Portal publication before upload, then runs
+`publishAndReleaseToMavenCentral` and `publishPlugins`. Maven Central typically
+takes several minutes to surface newly published artifacts, and Plugin Portal
+approval or public visibility can lag behind workflow completion.
