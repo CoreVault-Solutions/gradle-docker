@@ -17,7 +17,7 @@
  * This file is part of the CoreVault gradle-docker plugin, a Kotlin port and
  * derivative of the Palantir gradle-docker plugin, with changes by CoreVault Solutions.
  */
-package com.corevault.gradle.docker
+package com.corevaultsolutions.gradle.docker
 
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -44,7 +44,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
         buildFileKts.writeText(
             """
             plugins {
-                id("com.corevault.docker")
+                id("com.corevaultsolutions.docker")
             }
             """.trimIndent(),
         )
@@ -59,7 +59,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
         buildFileKts.writeText(
             """
             plugins {
-                id("com.corevault.docker")
+                id("com.corevaultsolutions.docker")
             }
             docker {
                 imageName = "$id"
@@ -90,7 +90,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
         buildFileKts.writeText(
             """
             plugins {
-                id("com.corevault.docker")
+                id("com.corevaultsolutions.docker")
             }
             docker {
                 imageName = "$id"
@@ -118,7 +118,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
         buildFileKts.writeText(
             """
             plugins {
-                id("com.corevault.docker")
+                id("com.corevaultsolutions.docker")
             }
             docker {
                 imageName = "$id"
@@ -151,7 +151,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
         buildFileKts.writeText(
             """
             plugins {
-                id("com.corevault.docker-compose")
+                id("com.corevaultsolutions.docker-compose")
             }
             repositories {
                 mavenCentral()
@@ -181,7 +181,7 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
         buildFileKts.writeText(
             """
             plugins {
-                id("com.corevault.docker-run")
+                id("com.corevaultsolutions.docker-run")
             }
             dockerRun {
                 name = "bar-kts"

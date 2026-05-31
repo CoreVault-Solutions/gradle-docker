@@ -17,7 +17,7 @@
  * This file is part of the CoreVault gradle-docker plugin, a Kotlin port and
  * derivative of the Palantir gradle-docker plugin, with changes by CoreVault Solutions.
  */
-package com.corevault.gradle.docker
+package com.corevaultsolutions.gradle.docker
 
 import org.gradle.testkit.runner.TaskOutcome
 import java.io.File
@@ -93,7 +93,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
+                id 'com.corevaultsolutions.docker'
             }
             """.trimIndent(),
         )
@@ -106,7 +106,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
+                id 'com.corevaultsolutions.docker'
             }
             docker {
                 imageName = ''
@@ -123,7 +123,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
+                id 'com.corevaultsolutions.docker'
             }
             docker {
                 imageName = 'test-bad-labels'
@@ -147,7 +147,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
+                id 'com.corevaultsolutions.docker'
             }
             docker {
                 imageName = 'test-empty-label'
@@ -170,7 +170,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
+                id 'com.corevaultsolutions.docker'
             }
             docker {
                 imageName = '$id'
@@ -199,7 +199,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
+                id 'com.corevaultsolutions.docker'
             }
             docker {
                 imageName = 'collide'
@@ -218,8 +218,8 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
-                id 'com.corevault.docker-compose'
+                id 'com.corevaultsolutions.docker'
+                id 'com.corevaultsolutions.docker-compose'
             }
             docker {
                 imageName = 'foo'
@@ -235,7 +235,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             version = '2.3.4'
             docker {
                 imageName = 'verimg'
@@ -260,7 +260,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker { imageName = '$id' }
             """.trimIndent(),
         )
@@ -278,7 +278,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("foo").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 dockerfile project.file("foo")
@@ -300,7 +300,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\nADD $filename /tmp/\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 files "$filename"
@@ -322,7 +322,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine\nMAINTAINER $id\nADD $filename /tmp/\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 files "$filename"
@@ -346,7 +346,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 tags = ['latest', 'another', 'withTaskName@2.0', "newImageName@${id}-new:latest"]
@@ -373,7 +373,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 tags = ['latest', 'another', 'withTaskName@2.0', "newImageName@${id}-new:latest"]
@@ -421,7 +421,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         )
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 buildArgs = [BUILD_ARG_NO_DEFAULT: 'gradleBuildArg', BUILD_ARG_WITH_DEFAULT: 'gradleOverrideBuildArg']
@@ -443,7 +443,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\nADD $filename /tmp/\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 files "$filename"
@@ -469,7 +469,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 pull = true
@@ -490,7 +490,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\nRUN curl localhost:404\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 network = 'foobar'
@@ -515,7 +515,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\nADD $filename /tmp/\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 files "bar.txt"
@@ -538,7 +538,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER id\nADD foo.tgz /tmp/\nADD from_project /tmp/\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             task myTgz(type: Tar) {
                 destinationDirectory = layout.buildDirectory
                 archiveBaseName = 'foo'
@@ -568,7 +568,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 labels['test-label'] = 'test-value'
@@ -590,7 +590,7 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\nMAINTAINER $id\nADD myDir /myDir/\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = '$id'
                 copySpec.from("myDir").into("myDir")

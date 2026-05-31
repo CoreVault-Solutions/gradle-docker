@@ -17,7 +17,7 @@
  * This file is part of the CoreVault gradle-docker plugin, a Kotlin port and
  * derivative of the Palantir gradle-docker plugin, with changes by CoreVault Solutions.
  */
-package com.corevault.gradle.docker
+package com.corevaultsolutions.gradle.docker
 
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -40,8 +40,8 @@ class DockerRunPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
-                id 'com.corevault.docker-run'
+                id 'com.corevaultsolutions.docker'
+                id 'com.corevaultsolutions.docker-run'
             }
             docker {
                 imageName = 'foo-image:latest'
@@ -71,7 +71,7 @@ class DockerRunPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-run'
+                id 'com.corevaultsolutions.docker-run'
             }
             dockerRun {
                 name 'bar'
@@ -98,7 +98,7 @@ class DockerRunPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-run'
+                id 'com.corevaultsolutions.docker-run'
             }
             dockerRun {
                 name 'bar-hostnetwork'
@@ -119,7 +119,7 @@ class DockerRunPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-run'
+                id 'com.corevaultsolutions.docker-run'
             }
             dockerRun {
                 name 'bar-nodaemonize'
@@ -143,7 +143,7 @@ class DockerRunPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-run'
+                id 'com.corevaultsolutions.docker-run'
             }
             dockerRun {
                 name 'bar-ignore-exit-code'
@@ -164,8 +164,8 @@ class DockerRunPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
-                id 'com.corevault.docker-run'
+                id 'com.corevaultsolutions.docker'
+                id 'com.corevaultsolutions.docker-run'
             }
             docker {
                 imageName = 'foo-image:latest'
@@ -204,8 +204,8 @@ class DockerRunPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
-                id 'com.corevault.docker-run'
+                id 'com.corevaultsolutions.docker'
+                id 'com.corevaultsolutions.docker-run'
             }
             docker {
                 imageName = 'foo-image:latest'
@@ -244,8 +244,8 @@ class DockerRunPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
-                id 'com.corevault.docker-run'
+                id 'com.corevaultsolutions.docker'
+                id 'com.corevaultsolutions.docker-run'
             }
             docker {
                 imageName = 'foo-image:latest'
@@ -285,8 +285,8 @@ class DockerRunPluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker'
-                id 'com.corevault.docker-run'
+                id 'com.corevaultsolutions.docker'
+                id 'com.corevaultsolutions.docker-run'
             }
             docker {
                 imageName = 'foo-image:latest'

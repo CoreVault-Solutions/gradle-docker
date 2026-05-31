@@ -17,7 +17,7 @@
  * This file is part of the CoreVault gradle-docker plugin, a Kotlin port and
  * derivative of the Palantir gradle-docker plugin, with changes by CoreVault Solutions.
  */
-package com.corevault.gradle.docker
+package com.corevaultsolutions.gradle.docker
 
 import org.gradle.api.artifacts.DependencyConstraint
 import org.gradle.api.artifacts.DependencySet

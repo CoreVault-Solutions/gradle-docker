@@ -52,7 +52,7 @@ apply plugin: 'com.palantir.failure-reports'
 apply plugin: 'com.palantir.baseline-java-versions'
 apply plugin: 'com.palantir.jdks.latest'
 
-group = 'com.corevault.gradle.docker'
+group = 'com.corevaultsolutions.gradle.docker'
 // gitVersion() derives the version from git tags, so it works on any CI (and locally)
 // without a CI-specific tag environment variable.
 version = gitVersion()
@@ -74,21 +74,21 @@ dependencies {
 gradlePlugin {
     plugins {
         dockerPlugin {
-            id = 'com.corevault.docker'
+            id = 'com.corevaultsolutions.docker'
             displayName = 'CoreVault Gradle Docker'
-            implementationClass = 'com.corevault.gradle.docker.CoreVaultDockerPlugin'
+            implementationClass = 'com.corevaultsolutions.gradle.docker.CoreVaultDockerPlugin'
             description = 'Simple Docker orchestrator for executing docker build and push from within Gradle.'
         }
         dockerComposePlugin {
-            id = 'com.corevault.docker-compose'
+            id = 'com.corevaultsolutions.docker-compose'
             displayName = 'CoreVault Gradle Docker-Compose'
-            implementationClass = 'com.corevault.gradle.docker.DockerComposePlugin'
+            implementationClass = 'com.corevaultsolutions.gradle.docker.DockerComposePlugin'
             description = 'Docker Compose orchestrator for docker-compose up/down from within Gradle.'
         }
         dockerRunPlugin {
-            id = 'com.corevault.docker-run'
+            id = 'com.corevaultsolutions.docker-run'
             displayName = 'CoreVault Gradle Docker-Run'
-            implementationClass = 'com.corevault.gradle.docker.DockerRunPlugin'
+            implementationClass = 'com.corevaultsolutions.gradle.docker.DockerRunPlugin'
             description = 'Docker Run task orchestrator for running containers from within Gradle.'
         }
     }

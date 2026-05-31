@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.corevault.gradle.docker
+package com.corevaultsolutions.gradle.docker
 
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -46,7 +46,7 @@ class ConfigurationCacheTests : AbstractPluginTest() {
         file("Dockerfile").writeText("FROM alpine:3.2\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker' }
+            plugins { id 'com.corevaultsolutions.docker' }
             docker {
                 imageName = 'cc-image'
                 tags = ['latest', 'v1']
@@ -62,7 +62,7 @@ class ConfigurationCacheTests : AbstractPluginTest() {
     fun `docker-run tasks are configuration-cache compatible`() {
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker-run' }
+            plugins { id 'com.corevaultsolutions.docker-run' }
             dockerRun {
                 name = 'cc-bar'
                 image = 'alpine:3.2'
@@ -88,7 +88,7 @@ class ConfigurationCacheTests : AbstractPluginTest() {
         file("docker-compose.yml.template").writeText("svc:\n  image: '{{currentImageName}}'\n")
         buildFile.writeText(
             """
-            plugins { id 'com.corevault.docker-compose' }
+            plugins { id 'com.corevaultsolutions.docker-compose' }
             repositories { mavenCentral() }
             dockerCompose {
                 templateTokens(['currentImageName': 'repo/svc:1.0.0'])

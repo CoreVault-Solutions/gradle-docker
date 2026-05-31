@@ -17,7 +17,7 @@
  * This file is part of the CoreVault gradle-docker plugin, a Kotlin port and
  * derivative of the Palantir gradle-docker plugin, with changes by CoreVault Solutions.
  */
-package com.corevault.gradle.docker
+package com.corevaultsolutions.gradle.docker
 
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -42,7 +42,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-compose'
+                id 'com.corevaultsolutions.docker-compose'
             }
             repositories {
                 mavenCentral()
@@ -76,7 +76,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-compose'
+                id 'com.corevaultsolutions.docker-compose'
             }
             repositories {
                 mavenCentral()
@@ -98,7 +98,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-compose'
+                id 'com.corevaultsolutions.docker-compose'
             }
             repositories {
                 mavenCentral()
@@ -120,7 +120,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-compose'
+                id 'com.corevaultsolutions.docker-compose'
             }
             dockerCompose {
                 template 'templates/customTemplate.yml'
@@ -138,7 +138,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-compose'
+                id 'com.corevaultsolutions.docker-compose'
             }
             """.trimIndent(),
         )
@@ -170,7 +170,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-compose'
+                id 'com.corevaultsolutions.docker-compose'
             }
             """.trimIndent(),
         )
@@ -198,7 +198,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-compose'
+                id 'com.corevaultsolutions.docker-compose'
             }
             dockerCompose {
                 dockerComposeFile "test-file.yml"
@@ -227,7 +227,7 @@ class DockerComposePluginTests : AbstractPluginTest() {
         buildFile.writeText(
             """
             plugins {
-                id 'com.corevault.docker-compose'
+                id 'com.corevaultsolutions.docker-compose'
             }
             """.trimIndent(),
         )

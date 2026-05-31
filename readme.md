@@ -4,17 +4,17 @@ CoreVault Docker Gradle Plugin
 > **Fork notice:** This project is a Kotlin port and continuation of the
 > [Palantir `gradle-docker` plugin](https://github.com/palantir/gradle-docker)
 > (Apache 2.0), maintained by CoreVault Solutions since 2025.
-> Plugin IDs have moved from `com.palantir.*` to `com.corevault.*` and the
+> Plugin IDs have moved from `com.palantir.*` to `com.corevaultsolutions.*` and the
 > configuration DSL now uses Kotlin-friendly property assignment.
 
 This repository provides three Gradle plugins for working with Docker containers:
-- `com.corevault.docker`: adds basic tasks for building and pushing
+- `com.corevaultsolutions.docker`: adds basic tasks for building and pushing
   docker images based on a simple configuration block that specifies the image
   name, the Dockerfile, task dependencies, and any additional file resources
   required for the Docker build.
-- `com.corevault.docker-compose`: adds a task for populating placeholders in a
+- `com.corevaultsolutions.docker-compose`: adds a task for populating placeholders in a
   docker-compose template file with image versions resolved from dependencies.
-- `com.corevault.docker-run`: adds tasks for starting, stopping, statusing and
+- `com.corevaultsolutions.docker-run`: adds tasks for starting, stopping, statusing and
   cleaning up a named container based on a specified image.
 
 The plugins are compatible with Gradle 8.14+ and Gradle 9.x and are compatible
@@ -27,7 +27,7 @@ Apply the plugin using standard gradle convention:
 
 ````gradle
 plugins {
-    id 'com.corevault.docker' version '<version>'
+    id 'com.corevaultsolutions.docker' version '<version>'
 }
 ````
 
@@ -116,7 +116,7 @@ docker {
 
 Managing Docker image dependencies
 ----------------------------------
-The `com.corevault.docker` and `com.corevault.docker-compose` plugins provide
+The `com.corevaultsolutions.docker` and `com.corevaultsolutions.docker-compose` plugins provide
 functionality to declare and resolve version-aware dependencies between docker
 images, primarily to generate `docker-compose.yml` files whose image versions
 are mutually compatible.
@@ -130,7 +130,7 @@ Docker containers.
 ```gradle
 plugins {
     id 'maven-publish'
-    id 'com.corevault.docker'
+    id 'com.corevaultsolutions.docker'
 }
 
 dependencies {
@@ -150,7 +150,7 @@ publishing {
 
 ### Generating docker-compose.yml files from dependencies
 
-The `com.corevault.docker-compose` plugin uses the transitive dependencies of the
+The `com.corevaultsolutions.docker-compose` plugin uses the transitive dependencies of the
 `docker` configuration to populate a `docker-compose.yml.template` file with the
 resolved image versions. The `generateDockerCompose` task replaces each
 `{{group:name}}` token in the template with the concrete resolved version and
@@ -159,7 +159,7 @@ provided via `templateTokens`.
 
 ```gradle
 plugins {
-    id 'com.corevault.docker-compose'
+    id 'com.corevaultsolutions.docker-compose'
 }
 
 dependencies {
@@ -198,7 +198,7 @@ Docker Run Plugin
 
 ```gradle
 plugins {
-    id 'com.corevault.docker-run' version '<version>'
+    id 'com.corevaultsolutions.docker-run' version '<version>'
 }
 ```
 
