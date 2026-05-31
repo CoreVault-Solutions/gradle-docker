@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main, master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & check (wrapper Gradle)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gradle-git-version needs full history + tags to compute the version.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      # Docker-dependent integration tests self-skip in CI (CI=true), so this runs the
+      # unit/config tests, verifyLocks, formatting/baseline checks, and the plugin-testing
+      # plugin's cross-Gradle TestKit matrix on the committed wrapper version.
+      - name: Build and check
+        run: ./gradlew build --stacktrace
+
+  cross-gradle-compile:
+    name: Compile against Gradle ${{ matrix.gradle }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Gradle versions this plugin can be *compiled* under. 9.5.1 is intentionally omitted:
+        # the Kotlin Gradle plugin (2.1.0) can't resolve its compiler-plugin classpath under
+        # Gradle 9.5's variant model ("Value for variants of root project : has not been
+        # calculated yet"). Runtime compatibility with 9.5.1 is still covered by the TestKit
+        # matrix (gradleTestUtils.gradleVersions) exercised in the `build` job above.
+        gradle: ['8.14.5', '9.0.0', '9.1.0']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      # Re-point the wrapper at the target Gradle version, then build with it. Using the
+      # wrapper (rather than a standalone `gradle`) preserves the project's gradle.properties
+      # and Palantir JDK bootstrapping.
+      - name: Switch wrapper to Gradle ${{ matrix.gradle }}
+        run: ./gradlew wrapper --gradle-version ${{ matrix.gradle }}
+      # Compiling main + test sources against each Gradle API catches version-specific
+      # breakages (e.g. nullability of Gradle's annotated APIs, removed/changed methods)
+      # before they reach consumers building this plugin via an included build.
+      #
+      # verifyLocks is intentionally excluded: gradle-consistent-versions ties the lock's
+      # constraint metadata to a single Gradle major, so it only runs in the `build` job
+      # above (on the committed wrapper version).
+      - name: Compile main & test sources
+        run: ./gradlew compileKotlin compileTestKotlin -x verifyLocks --stacktrace

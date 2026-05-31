@@ -1,0 +1,13 @@
+CoreVault gradle-docker
+Copyright 2025-2026 CoreVault Solutions
+
+This product is a Kotlin port and derivative work of the Palantir gradle-docker
+plugin:
+
+    gradle-docker
+    Copyright 2015-2021 Palantir Technologies Inc.
+    https://github.com/palantir/gradle-docker
+
+Licensed under the Apache License, Version 2.0 (see the LICENSE file). The
+original source files have been ported to Kotlin and modified by CoreVault
+Solutions; see the per-file headers for change notices.
