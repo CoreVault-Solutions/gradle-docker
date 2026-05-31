@@ -78,7 +78,7 @@ gradlePlugin {
             displayName = 'CoreVault Gradle Docker'
             implementationClass = 'com.corevaultsolutions.gradle.docker.CoreVaultDockerPlugin'
             description = 'Simple Docker orchestrator for executing docker build and push from within Gradle.'
-            tags = ['docker', 'container', 'gradle']
+            tags = ['docker', 'container', 'build', 'push']
         }
         dockerComposePlugin {
             id = 'com.corevaultsolutions.docker-compose'
