@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -41,3 +41,9 @@ jobs:
         run: ./gradlew publishPlugins --validate-only --stacktrace
       - name: Publish release artifacts
         run: ./gradlew publishAndReleaseToMavenCentral publishPlugins --stacktrace
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
