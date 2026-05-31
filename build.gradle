@@ -9,7 +9,6 @@ buildscript {
         classpath 'com.palantir.gradle.jdks:gradle-jdks:0.73.0'
         classpath 'com.palantir.gradle.jdkslatest:gradle-jdks-latest:0.26.0'
         classpath 'com.palantir.gradle.plugintesting:gradle-plugin-testing:0.6.0'
-        classpath 'com.palantir.gradle.externalpublish:gradle-external-publish-plugin:1.33.0'
         classpath 'com.palantir.gradle.failure-reports:gradle-failure-reports:1.18.0'
         classpath 'com.palantir.javaformat:gradle-palantir-java-format:2.86.0'
         classpath 'com.palantir.suppressible-error-prone:gradle-suppressible-error-prone:2.28.0'
@@ -25,6 +24,7 @@ buildscript {
 
 plugins {
     id 'com.gradle.plugin-publish' version '2.0.0'
+    id 'com.vanniktech.maven.publish' version '0.35.0'
 }
 allprojects {
     apply plugin: 'com.palantir.java-format'
@@ -35,7 +35,6 @@ repositories {
     mavenCentral() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
 }
 
-apply plugin: 'com.palantir.external-publish'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'groovy'
 apply plugin: 'org.jetbrains.kotlin.jvm'
@@ -47,7 +46,6 @@ apply plugin: 'com.palantir.gradle-guide'
 apply plugin: 'com.palantir.gradle-plugin-testing'
 apply plugin: 'com.palantir.idea-language-injector'
 apply plugin: 'com.palantir.jdks'
-apply plugin: 'com.palantir.external-publish-jar'
 apply plugin: 'com.palantir.failure-reports'
 apply plugin: 'com.palantir.baseline-java-versions'
 apply plugin: 'com.palantir.jdks.latest'
@@ -72,34 +70,69 @@ dependencies {
 }
 
 gradlePlugin {
+    website = 'https://github.com/CoreVault-Solutions/gradle-docker'
+    vcsUrl = 'https://github.com/CoreVault-Solutions/gradle-docker.git'
     plugins {
         dockerPlugin {
             id = 'com.corevaultsolutions.docker'
             displayName = 'CoreVault Gradle Docker'
             implementationClass = 'com.corevaultsolutions.gradle.docker.CoreVaultDockerPlugin'
             description = 'Simple Docker orchestrator for executing docker build and push from within Gradle.'
+            tags = ['docker', 'container', 'gradle']
         }
         dockerComposePlugin {
             id = 'com.corevaultsolutions.docker-compose'
             displayName = 'CoreVault Gradle Docker-Compose'
             implementationClass = 'com.corevaultsolutions.gradle.docker.DockerComposePlugin'
             description = 'Docker Compose orchestrator for docker-compose up/down from within Gradle.'
+            tags = ['docker-compose', 'docker', 'compose']
         }
         dockerRunPlugin {
             id = 'com.corevaultsolutions.docker-run'
             displayName = 'CoreVault Gradle Docker-Run'
             implementationClass = 'com.corevaultsolutions.gradle.docker.DockerRunPlugin'
             description = 'Docker Run task orchestrator for running containers from within Gradle.'
+            tags = ['docker-run', 'docker', 'container']
         }
     }
 }
 
-publishPlugins.onlyIf { versionDetails().isCleanTag }
-
-// Configure the publishPlugins task
-tasks.publish.dependsOn publishPlugins
-project.ext.'gradle.publish.key' = System.env["GRADLE_KEY"]
-project.ext.'gradle.publish.secret' = System.env["GRADLE_SECRET"]
+mavenPublishing {
+    publishToMavenCentral(true)
+    if (providers.gradleProperty('signingInMemoryKey').present) {
+        signAllPublications()
+    }
+    coordinates(project.group.toString(), 'gradle-docker', project.version.toString())
+    pom {
+        name = 'CoreVault Gradle Docker'
+        description = 'Gradle plugins for building, composing, and running Docker workloads.'
+        inceptionYear = '2025'
+        url = 'https://github.com/CoreVault-Solutions/gradle-docker'
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution = 'repo'
+            }
+        }
+        organization {
+            name = 'CoreVault Solutions'
+            url = 'https://github.com/CoreVault-Solutions'
+        }
+        developers {
+            developer {
+                id = 'corevaultsolutions'
+                name = 'CoreVault Solutions'
+                url = 'https://github.com/CoreVault-Solutions'
+            }
+        }
+        scm {
+            url = 'https://github.com/CoreVault-Solutions/gradle-docker'
+            connection = 'scm:git:git://github.com/CoreVault-Solutions/gradle-docker.git'
+            developerConnection = 'scm:git:ssh://git@github.com/CoreVault-Solutions/gradle-docker.git'
+        }
+    }
+}
 
 javaVersions {
     javaCompiler = 25
