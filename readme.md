@@ -6,6 +6,13 @@ CoreVault Docker Gradle Plugin
 > (Apache 2.0), maintained by CoreVault Solutions since 2025.
 > Plugin IDs have moved from `com.palantir.*` to `com.corevaultsolutions.*` and the
 > configuration DSL now uses Kotlin-friendly property assignment.
+>
+> **Development note:** We are striving to actively maintain this project. Some migrations,
+> refactors, and compatibility updates were completed with AI assistance and then
+> reviewed and refined by hand. The core `docker` plugin is the most actively used
+> path. The `docker-compose` and `docker-run` plugin paths have automated test
+> coverage, but they currently have less production usage and less real-world
+> validation than the main `docker` plugin.
 
 This repository provides three Gradle plugins for working with Docker containers:
 - `com.corevaultsolutions.docker`: adds basic tasks for building and pushing
