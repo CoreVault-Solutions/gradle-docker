@@ -61,6 +61,7 @@ docker {
 - `pull` (optional) whether Docker should attempt to pull a newer base image before
   building; defaults to `false`.
 - `noCache` (optional) whether the build should add `--no-cache`; defaults to `false`.
+- `target` (optional) the multi-stage Docker build target passed as `--target`; defaults to none.
 - `network` (optional) the network mode for the build (`--network`); defaults to none.
 - `buildx` (optional) whether to use `docker buildx` for cross-platform builds; defaults to `false`.
 - `platform` (optional) a set of platforms for buildx to target; defaults to empty.
@@ -105,6 +106,7 @@ docker {
     labels['maintainer'] = 'team@example.com'
     pull = true
     noCache = true
+    target = 'runtime'
 }
 ```
 

@@ -179,6 +179,7 @@ class CoreVaultDockerPlugin @Inject constructor(
                 cmdList.add("build")
             }
             if (ext.noCache) cmdList.add("--no-cache")
+            ext.target?.takeIf { it.isNotBlank() }?.let { cmdList.addAll(listOf("--target", it)) }
             if (ext.network != null) cmdList.addAll(listOf("--network", ext.network!!))
             for ((key, value) in ext.buildArgs) {
                 cmdList.addAll(listOf("--build-arg", "$key=$value"))

@@ -55,6 +55,7 @@ open class DockerExtension(val project: Project) {
     var buildArgs: Map<String, String> = emptyMap()
     var pull: Boolean = false
     var noCache: Boolean = false
+    var target: String? = null
     var network: String? = null
     var buildx: Boolean = false
     var platform: Set<String> = emptySet()

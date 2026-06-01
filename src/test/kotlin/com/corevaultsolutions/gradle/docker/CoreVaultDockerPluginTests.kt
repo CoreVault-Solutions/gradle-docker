@@ -231,6 +231,27 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
     }
 
     @Test
+    fun `target stage is forwarded to docker build command`() {
+        file("Dockerfile").writeText("FROM alpine:3.2 AS runtime\n")
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevaultsolutions.docker' }
+            docker {
+                imageName = 'target-image'
+                target = 'runtime'
+            }
+            task printInfo {
+                doLast {
+                    println "DOCKER: ${'$'}{tasks.docker.commandLine}"
+                }
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("printInfo").build()
+        assertTrue(result.output.contains("DOCKER: [docker, build, --target, runtime, -t, target-image, .]"))
+    }
+
+    @Test
     fun `default tag uses the project version`() {
         file("Dockerfile").writeText("FROM alpine:3.2\n")
         buildFile.writeText(

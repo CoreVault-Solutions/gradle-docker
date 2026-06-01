@@ -78,6 +78,29 @@ class CoreVaultDockerPluginKotlinDslTests : AbstractPluginTest() {
         assertTrue(result.output.contains("dockerPushWithTaskNameByTag"))
     }
 
+    @Test
+    fun `target stage is forwarded to docker build command (kotlin dsl)`() {
+        file("Dockerfile").writeText("FROM alpine:3.2 AS runtime\n")
+        buildFileKts.writeText(
+            """
+            plugins {
+                id("com.corevaultsolutions.docker")
+            }
+            docker {
+                imageName = "target-image-kts"
+                target = "runtime"
+            }
+            tasks.register("printInfo") {
+                doLast {
+                    println("DOCKER: ${'$'}{tasks.named("docker").get().property("commandLine")}")
+                }
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("printInfo").build()
+        assertTrue(result.output.contains("DOCKER: [docker, build, --target, runtime, -t, target-image-kts, .]"))
+    }
+
     // -------------------------------------------------------------------------
     // docker plugin (Docker daemon required)
     // -------------------------------------------------------------------------
