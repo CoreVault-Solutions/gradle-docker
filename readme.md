@@ -308,3 +308,4 @@ The workflow validates the Plugin Portal publication before upload, then runs
 `publishAndReleaseToMavenCentral` and `publishPlugins`. Maven Central typically
 takes several minutes to surface newly published artifacts, and Plugin Portal
 approval or public visibility can lag behind workflow completion.
+
