@@ -59,6 +59,22 @@ class ConfigurationCacheTests : AbstractPluginTest() {
     }
 
     @Test
+    fun `dockerTagsPush tasks are configuration-cache compatible`() {
+        file("Dockerfile").writeText("FROM alpine:3.2\n")
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevaultsolutions.docker' }
+            docker {
+                imageName = 'cc-image'
+                tags = ['latest']
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("dockerTagsPush", "--configuration-cache", "--dry-run").build()
+        assertNoConfigCacheProblems(result.output)
+    }
+
+    @Test
     fun `docker-run tasks are configuration-cache compatible`() {
         buildFile.writeText(
             """

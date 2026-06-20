@@ -23,6 +23,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.CopySpec
 import java.io.File
+import kotlin.jvm.JvmName
 
 open class DockerExtension(val project: Project) {
 
@@ -39,7 +40,14 @@ open class DockerExtension(val project: Project) {
             return name
         }
 
-    private var dockerfile: File? = null
+    @set:JvmName("setDockerfileProperty")
+    var dockerfile: File? = null
+        set(value) {
+            value?.let {
+                check(it.exists() && it.isFile) { "Specified Dockerfile must be an existing file: $it" }
+            }
+            field = value
+        }
     private var dockerComposeTemplate: String = "docker-compose.yml.template"
     private var dockerComposeFile: String = "docker-compose.yml"
     private val dependencies: MutableSet<Task> = linkedSetOf()
@@ -62,6 +70,13 @@ open class DockerExtension(val project: Project) {
     var load: Boolean = false
     var push: Boolean = false
     var builder: String? = null
+    var sbom: Boolean = false
+    var sbomGenerator: String? = null
+    var provenanceMode: String? = null
+        set(value) {
+            value?.let(::validateProvenanceMode)
+            field = value
+        }
 
     var resolvedDockerfile: File? = null
         private set
@@ -70,7 +85,7 @@ open class DockerExtension(val project: Project) {
     var resolvedDockerComposeFile: File? = null
         private set
 
-    private val copySpec: CopySpec = project.copySpec()
+    val copySpec: CopySpec = project.copySpec()
 
     /**
      * The full set of tags to apply, always including the project version (matching the original
@@ -80,7 +95,6 @@ open class DockerExtension(val project: Project) {
         get() = tags + project.version.toString()
 
     fun setDockerfile(dockerfile: File) {
-        check(dockerfile.exists()) { "Could not find specified Dockerfile: $dockerfile" }
         this.dockerfile = dockerfile
     }
 
@@ -109,11 +123,20 @@ open class DockerExtension(val project: Project) {
         }
     }
 
-    fun getCopySpec(): CopySpec = copySpec
+    fun provenance(mode: String) {
+        provenanceMode = mode
+    }
+
 
     fun resolvePathsAndValidate() {
         resolvedDockerfile = dockerfile ?: project.file(DEFAULT_DOCKERFILE_PATH)
         resolvedDockerComposeFile = project.file(dockerComposeFile)
         resolvedDockerComposeTemplate = project.file(dockerComposeTemplate)
+    }
+
+    private fun validateProvenanceMode(mode: String) {
+        require(mode == "min" || mode == "max") {
+            "Provenance mode must be 'min' or 'max', got '$mode'"
+        }
     }
 }
