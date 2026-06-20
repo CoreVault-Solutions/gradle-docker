@@ -287,9 +287,9 @@ Contributions to this project must follow the [contribution guide](CONTRIBUTING.
 Releasing
 ---------
 
-Releases are automated through GitHub Actions. Push a clean Git tag matching
-`v*` (for example `v0.38.0`) to trigger the publish workflow, which releases to
-both Maven Central and the Gradle Plugin Portal.
+Releases are automated through GitHub Actions. Push a clean semantic-version Git
+tag (for example `0.38.0` or `v0.38.0`) to trigger the publish workflow, which
+releases to both Maven Central and the Gradle Plugin Portal.
 
 The repository must have these GitHub Actions secrets configured:
 - `MAVEN_CENTRAL_USERNAME`
