@@ -22,15 +22,20 @@ package com.corevaultsolutions.gradle.docker
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.file.Directory
 import org.gradle.api.internal.attributes.AttributesFactory
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Zip
+import java.io.File
 import java.util.regex.Pattern
 import javax.inject.Inject
 
@@ -38,12 +43,42 @@ class CoreVaultDockerPlugin @Inject constructor(
     private val objectFactory: ObjectFactory,
     private val attributesFactory: AttributesFactory,
 ) : Plugin<Project> {
+    private data class DockerTaskProviders(
+        val clean: TaskProvider<Delete>,
+        val prepare: TaskProvider<Copy>,
+        val execBuild: TaskProvider<Exec>,
+        val tag: TaskProvider<Task>,
+        val pushAllTags: TaskProvider<Task>,
+        val dockerfileZip: TaskProvider<Zip>,
+    )
+
+    private data class TagRegistrationContext(
+        val project: Project,
+        val ext: DockerExtension,
+        val tasks: DockerTaskProviders,
+        val dockerDirProvider: Provider<Directory>,
+        val dockerDependencies: Set<Task>,
+        val imageName: String,
+    )
+
     override fun apply(project: Project) {
         val ext = project.extensions.create("docker", DockerExtension::class.java, project)
+        ensureDockerConfiguration(project)
+        val tasks = registerDockerTasks(project)
+        registerDockerComponent(project, tasks.dockerfileZip)
+
+        project.afterEvaluate {
+            configureDockerTasks(project, ext, tasks)
+        }
+    }
+
+    private fun ensureDockerConfiguration(project: Project) {
         if (project.configurations.findByName("docker") == null) {
             project.configurations.create("docker")
         }
+    }
 
+    private fun registerDockerTasks(project: Project): DockerTaskProviders {
         val clean = project.tasks.register("dockerClean", Delete::class.java) { t ->
             t.group = "Docker"
             t.description = "Cleans Docker build directory."
@@ -83,6 +118,20 @@ class CoreVaultDockerPlugin @Inject constructor(
             t.description = "Bundles the configured Dockerfile in a zip file"
         }
 
+        return DockerTaskProviders(
+            clean = clean,
+            prepare = prepare,
+            execBuild = execBuild,
+            tag = tag,
+            pushAllTags = pushAllTags,
+            dockerfileZip = dockerfileZip,
+        )
+    }
+
+    private fun registerDockerComponent(
+        project: Project,
+        dockerfileZip: TaskProvider<Zip>,
+    ) {
         val dockerConfiguration = project.configurations.named("docker")
         val dockerArtifact = project.artifacts.add("docker", dockerfileZip)
         project.components.add(
@@ -93,112 +142,216 @@ class CoreVaultDockerPlugin @Inject constructor(
                 attributesFactory,
             ),
         )
+    }
 
-        project.afterEvaluate {
-            ext.resolvePathsAndValidate()
-            val dockerDirProvider = project.layout.buildDirectory.dir("docker")
+    private fun configureDockerTasks(
+        project: Project,
+        ext: DockerExtension,
+        tasks: DockerTaskProviders,
+    ) {
+        ext.resolvePathsAndValidate()
+        val dockerDirProvider = project.layout.buildDirectory.dir("docker")
+        val dockerDependencies = ext.getDependencies()
 
-            val cleanTask = clean.get()
-            cleanTask.setDelete(dockerDirProvider)
+        configureCleanTask(tasks.clean, dockerDirProvider)
+        configurePrepareTask(tasks.prepare, ext, dockerDirProvider)
+        configureExecBuildTask(tasks.execBuild, ext, dockerDirProvider, dockerDependencies)
+        registerTagAndPushTasks(project, ext, tasks, dockerDirProvider, dockerDependencies)
+        tasks.dockerfileZip.get().from(ext.resolvedDockerfile)
+    }
 
-            val prepareTask = prepare.get()
-            prepareTask.with(ext.copySpec)
-            val dockerfileName = ext.resolvedDockerfile!!.name
-            prepareTask.from(ext.resolvedDockerfile).rename { fileName: String ->
-                fileName.replace(dockerfileName, "Dockerfile")
-            }
-            prepareTask.into(dockerDirProvider.get())
+    private fun configureCleanTask(
+        clean: TaskProvider<Delete>,
+        dockerDirProvider: Provider<Directory>,
+    ) {
+        clean.get().setDelete(dockerDirProvider)
+    }
 
-            val dockerDependencies = ext.getDependencies()
-            val execTask = execBuild.get()
-            execTask.setWorkingDir(dockerDirProvider.get())
-            // Resolve the command line at configuration time (not in a doFirst). The task then holds
-            // only serializable state, keeping it compatible with the Gradle configuration cache.
-            execTask.commandLine(buildCommandLine(ext))
-            execTask.dependsOn(dockerDependencies)
-            execTask.logging.captureStandardOutput(LogLevel.INFO)
-            execTask.logging.captureStandardError(LogLevel.ERROR)
-
-            val imageName = ext.imageName!!
-
-            // Build tag map: taskName -> (displayName, finalTag). Everything is resolved here, at
-            // configuration time, so the tag/push tasks capture only plain strings.
-            val tags = mutableMapOf<String, Pair<String, String>>()
-            ext.namedTags.forEach { (taskName, tagName) ->
-                val normalizedTaskName = generateTagTaskName(taskName)
-                require(!tags.containsKey(normalizedTaskName)) {
-                    "Task name '$normalizedTaskName' (from named tag '$taskName') already exists."
-                }
-                // For named tags the supplied value is already the fully-qualified tag.
-                tags[normalizedTaskName] = Pair(tagName, tagName)
-            }
-            if (ext.allTags.isNotEmpty()) {
-                ext.allTags.forEach { unresolvedTagName ->
-                    val taskName = generateTagTaskName(unresolvedTagName)
-                    require(!tags.containsKey(taskName)) { "Task name '$taskName' already exists." }
-                    tags[taskName] = Pair(unresolvedTagName, computeName(imageName, unresolvedTagName))
-                }
-            }
-
-            tags.forEach { (taskName, tagInfo) ->
-                val (displayName, finalTag) = tagInfo
-
-                val tagSubTask = project.tasks.register("dockerTag$taskName", Exec::class.java) { t ->
-                    t.group = "Docker"
-                    t.description = "Tags Docker image with tag '$displayName'"
-                    t.setWorkingDir(dockerDirProvider.get())
-                    t.commandLine("docker", "tag", imageName, finalTag)
-                    t.dependsOn(execBuild)
-                }
-                tag.get().dependsOn(tagSubTask)
-
-                val pushSubTask = project.tasks.register("dockerPush$taskName", Exec::class.java) { t ->
-                    t.group = "Docker"
-                    t.description = "Pushes the Docker image with tag '$displayName'"
-                    t.setWorkingDir(dockerDirProvider.get())
-                    val metadataFile = dockerDirProvider.get().file("metadata-$taskName.json").asFile
-                    if (ext.buildx) {
-                        t.commandLine(
-                            buildCommandLine(
-                                ext,
-                                imageName = finalTag,
-                                extraArgs = listOf("--metadata-file", metadataFile.name),
-                                forceBuildxPush = true,
-                            ),
-                        )
-                        t.dependsOn(prepare)
-                        t.dependsOn(dockerDependencies)
-                    } else {
-                        t.commandLine("docker", "push", finalTag)
-                        t.dependsOn(tagSubTask)
-                        t.doLast {
-                            val process = ProcessBuilder(
-                                "docker",
-                                "inspect",
-                                "--format",
-                                "{{index .RepoDigests 0}}",
-                                finalTag,
-                            ).redirectErrorStream(true).start()
-                            val output = process.inputStream.bufferedReader().readText().trim()
-                            val exitCode = process.waitFor()
-                            val digest =
-                                if (exitCode == 0 && output.isNotBlank()) {
-                                    output
-                                } else {
-                                    throw GradleException("Failed to extract digest for $finalTag: $output")
-                                }
-                            metadataFile.parentFile.mkdirs()
-                            metadataFile.writeText(
-                                """{"containerimage.digest":"${jsonEscape(digest)}","image.name":"${jsonEscape(finalTag)}"}""",
-                            )
-                        }
-                    }
-                }
-                pushAllTags.get().dependsOn(pushSubTask)
-            }
-
-            dockerfileZip.get().from(ext.resolvedDockerfile)
+    private fun configurePrepareTask(
+        prepare: TaskProvider<Copy>,
+        ext: DockerExtension,
+        dockerDirProvider: Provider<Directory>,
+    ) {
+        val prepareTask = prepare.get()
+        prepareTask.with(ext.copySpec)
+        val dockerfileName = ext.resolvedDockerfile!!.name
+        prepareTask.from(ext.resolvedDockerfile).rename { fileName: String ->
+            fileName.replace(dockerfileName, "Dockerfile")
         }
+        prepareTask.into(dockerDirProvider.get())
+    }
+
+    private fun configureExecBuildTask(
+        execBuild: TaskProvider<Exec>,
+        ext: DockerExtension,
+        dockerDirProvider: Provider<Directory>,
+        dockerDependencies: Set<Task>,
+    ) {
+        val execTask = execBuild.get()
+        execTask.setWorkingDir(dockerDirProvider.get())
+        // Resolve the command line at configuration time (not in a doFirst). The task then holds
+        // only serializable state, keeping it compatible with the Gradle configuration cache.
+        execTask.commandLine(buildCommandLine(ext))
+        execTask.dependsOn(dockerDependencies)
+        execTask.logging.captureStandardOutput(LogLevel.INFO)
+        execTask.logging.captureStandardError(LogLevel.ERROR)
+    }
+
+    private fun registerTagAndPushTasks(
+        project: Project,
+        ext: DockerExtension,
+        tasks: DockerTaskProviders,
+        dockerDirProvider: Provider<Directory>,
+        dockerDependencies: Set<Task>,
+    ) {
+        val imageName = ext.imageName!!
+        val context = TagRegistrationContext(
+            project = project,
+            ext = ext,
+            tasks = tasks,
+            dockerDirProvider = dockerDirProvider,
+            dockerDependencies = dockerDependencies,
+            imageName = imageName,
+        )
+        val tags = resolveTags(ext, imageName)
+        tags.forEach { (taskName, tagInfo) ->
+            registerTagAndPushTask(context, taskName, tagInfo)
+        }
+    }
+
+    private fun resolveTags(
+        ext: DockerExtension,
+        imageName: String,
+    ): Map<String, Pair<String, String>> {
+        val tags = linkedMapOf<String, Pair<String, String>>()
+        ext.namedTags.forEach { (taskName, tagName) ->
+            val normalizedTaskName = generateTagTaskName(taskName)
+            require(!tags.containsKey(normalizedTaskName)) {
+                "Task name '$normalizedTaskName' (from named tag '$taskName') already exists."
+            }
+            // For named tags the supplied value is already the fully-qualified tag.
+            tags[normalizedTaskName] = Pair(tagName, tagName)
+        }
+        ext.allTags.forEach { unresolvedTagName ->
+            val taskName = generateTagTaskName(unresolvedTagName)
+            require(!tags.containsKey(taskName)) { "Task name '$taskName' already exists." }
+            tags[taskName] = Pair(unresolvedTagName, computeName(imageName, unresolvedTagName))
+        }
+        return tags
+    }
+
+    private fun registerTagAndPushTask(
+        context: TagRegistrationContext,
+        taskName: String,
+        tagInfo: Pair<String, String>,
+    ) {
+        val (displayName, finalTag) = tagInfo
+        val tagSubTask = registerTagTask(
+            context,
+            taskName,
+            displayName,
+            finalTag,
+        )
+        context.tasks.tag.get().dependsOn(tagSubTask)
+
+        val pushSubTask = registerPushTask(
+            context,
+            tagSubTask,
+            taskName,
+            displayName,
+            finalTag,
+        )
+        context.tasks.pushAllTags.get().dependsOn(pushSubTask)
+    }
+
+    private fun registerTagTask(
+        context: TagRegistrationContext,
+        taskName: String,
+        displayName: String,
+        finalTag: String,
+    ): TaskProvider<Exec> =
+        context.project.tasks.register("dockerTag$taskName", Exec::class.java) { t ->
+            t.group = "Docker"
+            t.description = "Tags Docker image with tag '$displayName'"
+            t.setWorkingDir(context.dockerDirProvider.get())
+            t.commandLine("docker", "tag", context.imageName, finalTag)
+            t.dependsOn(context.tasks.execBuild)
+        }
+
+    private fun registerPushTask(
+        context: TagRegistrationContext,
+        tagSubTask: TaskProvider<Exec>,
+        taskName: String,
+        displayName: String,
+        finalTag: String,
+    ): TaskProvider<Exec> =
+        context.project.tasks.register("dockerPush$taskName", Exec::class.java) { task ->
+            task.group = "Docker"
+            task.description = "Pushes the Docker image with tag '$displayName'"
+            task.setWorkingDir(context.dockerDirProvider.get())
+            val metadataFile = context.dockerDirProvider.get().file("metadata-$taskName.json").asFile
+            val ext = context.ext
+            val prepare = context.tasks.prepare
+            val dockerDependencies = context.dockerDependencies
+
+            if (ext.buildx) {
+                configureBuildxPushTask(task, ext, prepare, dockerDependencies, finalTag, metadataFile.name)
+            } else {
+                configureClassicPushTask(task, tagSubTask, finalTag, metadataFile)
+            }
+        }
+
+    private fun configureBuildxPushTask(
+        task: Exec,
+        ext: DockerExtension,
+        prepare: TaskProvider<Copy>,
+        dockerDependencies: Set<Task>,
+        finalTag: String,
+        metadataFileName: String,
+    ) {
+        task.commandLine(
+            buildCommandLine(
+                ext,
+                imageName = finalTag,
+                extraArgs = listOf("--metadata-file", metadataFileName),
+                forceBuildxPush = true,
+            ),
+        )
+        task.dependsOn(prepare)
+        task.dependsOn(dockerDependencies)
+    }
+
+    private fun configureClassicPushTask(
+        task: Exec,
+        tagSubTask: TaskProvider<Exec>,
+        finalTag: String,
+        metadataFile: File,
+    ) {
+        task.commandLine("docker", "push", finalTag)
+        task.dependsOn(tagSubTask)
+        task.doLast {
+            val digest = extractPushedDigest(finalTag)
+            metadataFile.parentFile.mkdirs()
+            metadataFile.writeText(
+                """{"containerimage.digest":"${jsonEscape(digest)}","image.name":"${jsonEscape(finalTag)}"}""",
+            )
+        }
+    }
+
+    private fun extractPushedDigest(finalTag: String): String {
+        val process = ProcessBuilder(
+            "docker",
+            "inspect",
+            "--format",
+            "{{index .RepoDigests 0}}",
+            finalTag,
+        ).redirectErrorStream(true).start()
+        val output = process.inputStream.bufferedReader().readText().trim()
+        val exitCode = process.waitFor()
+        if (exitCode == 0 && output.isNotBlank()) {
+            return output
+        }
+        throw GradleException("Failed to extract digest for $finalTag: $output")
     }
 
     companion object {
