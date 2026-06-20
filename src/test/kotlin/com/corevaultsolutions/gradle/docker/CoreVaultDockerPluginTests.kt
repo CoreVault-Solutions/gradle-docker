@@ -22,6 +22,7 @@ package com.corevaultsolutions.gradle.docker
 import org.gradle.testkit.runner.TaskOutcome
 import java.io.File
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -249,6 +250,106 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         )
         val result = gradleRunner("printInfo").build()
         assertTrue(result.output.contains("DOCKER: [docker, build, --target, runtime, -t, target-image, .]"))
+    }
+
+    @Test
+    fun `sbom and provenance are forwarded to docker buildx command`() {
+        file("Dockerfile").writeText("FROM alpine:3.2\n")
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevaultsolutions.docker' }
+            docker {
+                imageName = 'attest-image'
+                buildx = true
+                sbom = true
+                sbomGenerator = 'docker/scout-sbom-indexer:latest'
+                provenanceMode = 'max'
+            }
+            task printInfo {
+                doLast {
+                    println "DOCKER: ${'$'}{tasks.docker.commandLine}"
+                }
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("printInfo").build()
+        assertTrue(
+            result.output.contains(
+                "DOCKER: [docker, buildx, build, " +
+                    "--attest, type=sbom,generator=docker/scout-sbom-indexer:latest, " +
+                    "--attest, type=provenance,mode=max, -t, attest-image, .]",
+            ),
+        )
+    }
+
+    @Test
+    fun `buildx push task builds final tag with metadata file and attestations`() {
+        file("Dockerfile").writeText("FROM alpine:3.2\n")
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevaultsolutions.docker' }
+            docker {
+                imageName = 'push-image'
+                tags = ['latest']
+                buildx = true
+                load = true
+                sbom = true
+                provenance 'min'
+            }
+            task printInfo {
+                doLast {
+                    println "DOCKER_PUSH: ${'$'}{tasks.dockerPushLatest.commandLine}"
+                }
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("printInfo").build()
+        val pushLine = result.output.lineSequence().first { it.startsWith("DOCKER_PUSH:") }
+        assertTrue(
+            pushLine.contains(
+                "[docker, buildx, build, --push, --attest, type=sbom, " +
+                    "--attest, type=provenance,mode=min, -t, push-image:latest, " +
+                    "--metadata-file, metadata-Latest.json, .]",
+            ),
+        )
+        assertFalse(pushLine.contains("--load"))
+    }
+
+    @Test
+    fun `sbom requires buildx`() {
+        file("Dockerfile").writeText("FROM alpine:3.2\n")
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevaultsolutions.docker' }
+            docker {
+                imageName = 'attest-image'
+                sbom = true
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("tasks").buildAndFail()
+        assertTrue(
+            result.output.contains(
+                "SBOM and provenance attestations require buildx to be enabled. Set buildx = true in docker { }.",
+            ),
+        )
+    }
+
+    @Test
+    fun `provenance mode must be min or max`() {
+        file("Dockerfile").writeText("FROM alpine:3.2\n")
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevaultsolutions.docker' }
+            docker {
+                imageName = 'attest-image'
+                buildx = true
+                provenanceMode = 'full'
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("tasks").buildAndFail()
+        assertTrue(result.output.contains("Provenance mode must be 'min' or 'max', got 'full'"))
     }
 
     @Test

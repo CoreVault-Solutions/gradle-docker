@@ -102,7 +102,7 @@ class CoreVaultDockerPlugin @Inject constructor(
             cleanTask.setDelete(dockerDirProvider)
 
             val prepareTask = prepare.get()
-            prepareTask.with(ext.getCopySpec())
+            prepareTask.with(ext.copySpec)
             val dockerfileName = ext.resolvedDockerfile!!.name
             prepareTask.from(ext.resolvedDockerfile).rename { fileName: String ->
                 fileName.replace(dockerfileName, "Dockerfile")
@@ -156,8 +156,43 @@ class CoreVaultDockerPlugin @Inject constructor(
                     t.group = "Docker"
                     t.description = "Pushes the Docker image with tag '$displayName'"
                     t.setWorkingDir(dockerDirProvider.get())
-                    t.commandLine("docker", "push", finalTag)
-                    t.dependsOn(tagSubTask)
+                    val metadataFile = dockerDirProvider.get().file("metadata-$taskName.json").asFile
+                    if (ext.buildx) {
+                        t.commandLine(
+                            buildCommandLine(
+                                ext,
+                                imageName = finalTag,
+                                extraArgs = listOf("--metadata-file", metadataFile.name),
+                                forceBuildxPush = true,
+                            ),
+                        )
+                        t.dependsOn(prepare)
+                    } else {
+                        t.commandLine("docker", "push", finalTag)
+                        t.dependsOn(tagSubTask)
+                        t.doLast {
+                            val process = ProcessBuilder(
+                                "docker",
+                                "inspect",
+                                "--format",
+                                "{{index .RepoDigests 0}}",
+                                finalTag,
+                            ).redirectErrorStream(true).start()
+                            val output = process.inputStream.bufferedReader().readText().trim()
+                            val exitCode = process.waitFor()
+                            val digest =
+                                if (exitCode == 0) {
+                                    output
+                                } else {
+                                    t.logger.warn("Failed to extract digest for $finalTag: $output")
+                                    ""
+                                }
+                            metadataFile.parentFile.mkdirs()
+                            metadataFile.writeText(
+                                """{"containerimage.digest":"${jsonEscape(digest)}","image.name":"${jsonEscape(finalTag)}"}""",
+                            )
+                        }
+                    }
                 }
                 pushAllTags.get().dependsOn(pushSubTask)
             }
@@ -171,10 +206,20 @@ class CoreVaultDockerPlugin @Inject constructor(
         private val log: Logger = Logging.getLogger(CoreVaultDockerPlugin::class.java)
         private val LABEL_KEY_PATTERN: Pattern = Pattern.compile("^[a-z0-9.-]+$")
 
-        private fun buildCommandLine(ext: DockerExtension): List<String> {
+        private fun buildCommandLine(
+            ext: DockerExtension,
+            imageName: String? = ext.imageName,
+            extraArgs: List<String> = emptyList(),
+            forceBuildxPush: Boolean = false,
+        ): List<String> {
+            if ((ext.sbom || ext.provenanceMode != null) && !ext.buildx) {
+                throw GradleException(
+                    "SBOM and provenance attestations require buildx to be enabled. Set buildx = true in docker { }.",
+                )
+            }
             val cmdList = mutableListOf("docker")
             if (ext.buildx) {
-                appendBuildxArgs(cmdList, ext)
+                appendBuildxArgs(cmdList, ext, forceBuildxPush)
             } else {
                 cmdList.add("build")
             }
@@ -189,22 +234,42 @@ class CoreVaultDockerPlugin @Inject constructor(
             }
             appendLabelArgs(cmdList, ext)
             if (ext.pull) cmdList.add("--pull")
-            cmdList.addAll(listOf("-t", ext.imageName!!, "."))
+            imageName?.let { cmdList.addAll(listOf("-t", it)) }
+            cmdList.addAll(extraArgs)
+            cmdList.add(".")
             return cmdList
         }
 
-        private fun appendBuildxArgs(cmdList: MutableList<String>, ext: DockerExtension) {
+        private fun appendBuildxArgs(
+            cmdList: MutableList<String>,
+            ext: DockerExtension,
+            forceBuildxPush: Boolean,
+        ) {
             cmdList.addAll(listOf("buildx", "build"))
             if (ext.platform.isNotEmpty()) {
                 cmdList.addAll(listOf("--platform", ext.platform.joinToString(",")))
             }
-            if (ext.load) cmdList.add("--load")
-            if (ext.push) {
+            if (ext.load && !forceBuildxPush) cmdList.add("--load")
+            if (ext.push || forceBuildxPush) {
                 cmdList.add("--push")
-                if (ext.load) throw GradleException("Cannot combine 'push' and 'load' options.")
+                if (ext.load && !forceBuildxPush) {
+                    throw GradleException("Cannot combine 'push' and 'load' options.")
+                }
             }
             if (ext.builder != null) {
                 cmdList.addAll(listOf("--builder", ext.builder!!))
+            }
+            if (ext.sbom) {
+                val attestType =
+                    if (ext.sbomGenerator.isNullOrBlank()) {
+                        "type=sbom"
+                    } else {
+                        "type=sbom,generator=${ext.sbomGenerator}"
+                    }
+                cmdList.addAll(listOf("--attest", attestType))
+            }
+            ext.provenanceMode?.let { mode ->
+                cmdList.addAll(listOf("--attest", "type=provenance,mode=$mode"))
             }
         }
 
@@ -255,5 +320,27 @@ class CoreVaultDockerPlugin @Inject constructor(
             }
             return tagTaskName.replaceFirstChar { it.uppercase() }
         }
+
+        private fun jsonEscape(value: String): String =
+            buildString {
+                value.forEach { char ->
+                    when (char) {
+                        '\\' -> append("\\\\")
+                        '"' -> append("\\\"")
+                        '\b' -> append("\\b")
+                        '\u000C' -> append("\\f")
+                        '\n' -> append("\\n")
+                        '\r' -> append("\\r")
+                        '\t' -> append("\\t")
+                        else ->
+                            if (char < ' ') {
+                                append("\\u")
+                                append(char.code.toString(16).padStart(4, '0'))
+                            } else {
+                                append(char)
+                            }
+                    }
+                }
+            }
     }
 }

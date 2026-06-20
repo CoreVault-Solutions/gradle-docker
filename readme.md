@@ -75,10 +75,18 @@ docker {
 - `builder` (optional) the buildx builder to use; defaults to `null`.
 - `load` (optional) whether buildx should add `--load` (load into the local repository); `false`.
 - `push` (optional) whether buildx should add `--push` (push to the remote registry); `false`.
+- `sbom` (optional) whether buildx should emit an SBOM attestation (`--attest type=sbom`);
+  requires `buildx = true` and defaults to `false`.
+- `sbomGenerator` (optional) the SBOM generator image to pass as
+  `type=sbom,generator=<value>` when `sbom = true`; defaults to `null`.
+- `provenanceMode` (optional) the provenance attestation mode, either `min` or `max`.
+  Can also be configured with `provenance 'min'`; requires `buildx = true`.
 - `secrets` (optional) a list of `--secret` arguments for the build; defaults to empty.
 
 To build a docker image, run the `docker` task. To push it, run `dockerPush`.
 Tag and push tasks are generated for each `tags` entry, each `tag`, and the project version.
+When `buildx = true`, generated `dockerPush<tag>` tasks run `docker buildx build --push`
+for the final tag and write Docker build metadata to `build/docker/metadata-<tag>.json`.
 
 **Examples**
 
