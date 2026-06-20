@@ -23,6 +23,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.CopySpec
 import java.io.File
+import kotlin.jvm.JvmName
 
 open class DockerExtension(val project: Project) {
 
@@ -39,7 +40,14 @@ open class DockerExtension(val project: Project) {
             return name
         }
 
-    private var dockerfile: File? = null
+    @set:JvmName("setDockerfileProperty")
+    var dockerfile: File? = null
+        set(value) {
+            value?.let {
+                check(it.exists()) { "Could not find specified Dockerfile: $it" }
+            }
+            field = value
+        }
     private var dockerComposeTemplate: String = "docker-compose.yml.template"
     private var dockerComposeFile: String = "docker-compose.yml"
     private val dependencies: MutableSet<Task> = linkedSetOf()
@@ -87,7 +95,6 @@ open class DockerExtension(val project: Project) {
         get() = tags + project.version.toString()
 
     fun setDockerfile(dockerfile: File) {
-        check(dockerfile.exists()) { "Could not find specified Dockerfile: $dockerfile" }
         this.dockerfile = dockerfile
     }
 
