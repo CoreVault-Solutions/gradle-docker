@@ -160,6 +160,39 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
         assertTrue(result.output.contains("Docker label '' contains illegal characters."))
     }
 
+    @Test
+    fun `fail with missing dockerfile`() {
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevaultsolutions.docker' }
+            docker {
+                imageName = 'missing-dockerfile'
+                dockerfile = project.file('missing.Dockerfile')
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("tasks").buildAndFail()
+        assertTrue(result.output.contains("Specified Dockerfile must be an existing file:"))
+        assertTrue(result.output.contains("missing.Dockerfile"))
+    }
+
+    @Test
+    fun `fail when dockerfile points to directory`() {
+        directory("DockerfileDir")
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevaultsolutions.docker' }
+            docker {
+                imageName = 'directory-dockerfile'
+                dockerfile = project.file('DockerfileDir')
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("tasks").buildAndFail()
+        assertTrue(result.output.contains("Specified Dockerfile must be an existing file:"))
+        assertTrue(result.output.contains("DockerfileDir"))
+    }
+
     // -------------------------------------------------------------------------
     // Task graph test (no Docker required)
     // -------------------------------------------------------------------------
@@ -313,6 +346,34 @@ class CoreVaultDockerPluginTests : AbstractPluginTest() {
             ),
         )
         assertFalse(pushLine.contains("--load"))
+    }
+
+    @Test
+    fun `buildx push task depends on configured docker dependencies`() {
+        file("Dockerfile").writeText("FROM alpine:3.2\n")
+        buildFile.writeText(
+            """
+            plugins { id 'com.corevaultsolutions.docker' }
+            task produceDockerInput
+            docker {
+                imageName = 'push-image'
+                tags = ['latest']
+                buildx = true
+                dependsOn tasks.produceDockerInput
+            }
+            task printInfo {
+                doLast {
+                    def dependencyNames = tasks.dockerPushLatest.taskDependencies
+                        .getDependencies(tasks.dockerPushLatest)
+                        *.name
+                        .sort()
+                    println "DOCKER_PUSH_DEPENDENCIES: ${'$'}dependencyNames"
+                }
+            }
+            """.trimIndent(),
+        )
+        val result = gradleRunner("printInfo").build()
+        assertTrue(result.output.contains("DOCKER_PUSH_DEPENDENCIES: [dockerPrepare, produceDockerInput]"))
     }
 
     @Test

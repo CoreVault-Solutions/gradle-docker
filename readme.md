@@ -86,7 +86,7 @@ docker {
 To build a docker image, run the `docker` task. To push it, run `dockerPush`.
 Tag and push tasks are generated for each `tags` entry, each `tag`, and the project version.
 When `buildx = true`, generated `dockerPush<tag>` tasks run `docker buildx build --push`
-for the final tag and write Docker build metadata to `build/docker/metadata-<tag>.json`.
+for the final tag and write Docker build metadata to `build/docker/metadata-<taskName>.json`.
 
 **Examples**
 

@@ -44,7 +44,7 @@ open class DockerExtension(val project: Project) {
     var dockerfile: File? = null
         set(value) {
             value?.let {
-                check(it.exists()) { "Could not find specified Dockerfile: $it" }
+                check(it.exists() && it.isFile) { "Specified Dockerfile must be an existing file: $it" }
             }
             field = value
         }

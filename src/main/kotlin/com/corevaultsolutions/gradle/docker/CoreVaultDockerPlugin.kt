@@ -167,6 +167,7 @@ class CoreVaultDockerPlugin @Inject constructor(
                             ),
                         )
                         t.dependsOn(prepare)
+                        t.dependsOn(dockerDependencies)
                     } else {
                         t.commandLine("docker", "push", finalTag)
                         t.dependsOn(tagSubTask)
@@ -181,11 +182,10 @@ class CoreVaultDockerPlugin @Inject constructor(
                             val output = process.inputStream.bufferedReader().readText().trim()
                             val exitCode = process.waitFor()
                             val digest =
-                                if (exitCode == 0) {
+                                if (exitCode == 0 && output.isNotBlank()) {
                                     output
                                 } else {
-                                    t.logger.warn("Failed to extract digest for $finalTag: $output")
-                                    ""
+                                    throw GradleException("Failed to extract digest for $finalTag: $output")
                                 }
                             metadataFile.parentFile.mkdirs()
                             metadataFile.writeText(
